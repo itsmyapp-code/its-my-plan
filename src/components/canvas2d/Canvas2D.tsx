@@ -7,7 +7,7 @@ import { useUIStore } from '@/store/useUIStore';
 import { resolveSnap } from '@/utils/snapping';
 import { SCALE_2D, MIN_WALL_LENGTH, GRID_SNAP, GRID_MAJOR } from '@/constants';
 import { distance, projectPointOntoWall, wallLength } from '@/utils/geometry';
-import { clampOpeningPosition } from '@/utils/openingHelpers';
+import { clampOpeningPosition, getDefaultDoorFlipDirection } from '@/utils/openingHelpers';
 import { GridLayer } from './GridLayer';
 import { WallLayer } from './WallLayer';
 import { DrawingCursor } from './DrawingCursor';
@@ -177,6 +177,7 @@ export function Canvas2D() {
           const zOffset = isDoor ? 0 : 900;
 
           const clampedDist = clampOpeningPosition(closestWall, { width: opWidth, distanceFromP1: bestDistAlongWall });
+          const flipDirection = isDoor ? getDefaultDoorFlipDirection(closestWall, plan.walls) : false;
 
           usePlanStore.getState().addOpening({
             wallId: closestWall.id,
@@ -185,7 +186,7 @@ export function Canvas2D() {
             width: opWidth,
             height: opHeight,
             zOffset,
-            flipDirection: false,
+            flipDirection,
             hingeSide: 'p1',
           });
 

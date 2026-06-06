@@ -38,9 +38,9 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
     return (
       <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/30">
-          <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Wall</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300" aria-label="Close">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Wall</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
@@ -78,7 +78,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
           <div>
             <label className="prop-label">Angle</label>
-            <div className="text-sm text-slate-200 font-medium">{angle.toFixed(1)}°</div>
+            <div className="text-sm text-slate-900 font-medium">{angle.toFixed(1)}°</div>
           </div>
 
           <div>
@@ -89,7 +89,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                 className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   wall.wallType === 'internal'
                     ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                    : 'bg-slate-800/40 text-slate-400 hover:bg-slate-700/40'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 Internal (100mm)
@@ -99,7 +99,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                 className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   wall.wallType === 'external'
                     ? 'bg-orange-600/30 text-orange-300 ring-1 ring-orange-500/40'
-                    : 'bg-slate-800/40 text-slate-400 hover:bg-slate-700/40'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 External (300mm)
@@ -109,7 +109,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
           <div>
             <label className="prop-label">Thickness</label>
-            <div className="text-sm text-slate-200 font-medium">{formatMM(wall.thickness)}</div>
+            <div className="text-sm text-slate-900 font-medium">{formatMM(wall.thickness)}</div>
           </div>
 
           <div>
@@ -118,7 +118,10 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
               type="number"
               className="prop-input"
               value={wall.heightP1 ?? wall.height ?? 2400}
-              onChange={(e) => updateWall(wall.id, { heightP1: Number(e.target.value) || 2400 })}
+              onChange={(e) => {
+                const val = Number(e.target.value) || 2400;
+                updateWall(wall.id, { heightP1: val, height: undefined });
+              }}
               step={100}
               min={1000}
             />
@@ -130,12 +133,15 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
               type="number"
               className="prop-input"
               value={wall.heightP2 ?? wall.height ?? 2400}
-              onChange={(e) => updateWall(wall.id, { heightP2: Number(e.target.value) || 2400 })}
+              onChange={(e) => {
+                const val = Number(e.target.value) || 2400;
+                updateWall(wall.id, { heightP2: val, height: undefined });
+              }}
               step={100}
               min={1000}
             />
             {(wall.heightP1 ?? wall.height ?? 2400) !== (wall.heightP2 ?? wall.height ?? 2400) && (
-              <p className="text-[10px] text-orange-400 mt-1">Sloped / raked wall</p>
+              <p className="text-[10px] text-orange-400 mt-1">Sloped / raked wall — visible in 3D view</p>
             )}
           </div>
 
@@ -160,11 +166,11 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
     return (
       <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/30">
-          <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             {opening.type === 'door' ? 'Door' : 'Window'}
           </h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300" aria-label="Close">
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
@@ -253,7 +259,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                   className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     (opening.hingeSide ?? 'p1') === 'p1'
                       ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                      : 'bg-slate-800/40 text-slate-400 hover:bg-slate-700/40'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   P1 Side
@@ -263,7 +269,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                   className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     opening.hingeSide === 'p2'
                       ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                      : 'bg-slate-800/40 text-slate-400 hover:bg-slate-700/40'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   P2 Side
@@ -274,7 +280,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
           <button
             onClick={() => updateOpening(opening.id, { flipDirection: !opening.flipDirection })}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800/40 text-slate-300 text-xs font-medium hover:bg-slate-700/40 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             <FlipHorizontal2 size={12} />
             Flip Swing Direction
@@ -301,9 +307,9 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
     return (
       <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/30">
-          <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Fixture</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300" aria-label="Close">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Fixture</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
@@ -311,7 +317,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
         <div className="p-4 space-y-3">
           <div>
             <label className="prop-label">Type</label>
-            <div className="text-sm text-slate-200 font-medium">{def?.label ?? fixture.type}</div>
+            <div className="text-sm text-slate-900 font-medium">{def?.label ?? fixture.type}</div>
             {def && (
               <div className="text-[10px] text-slate-500 mt-0.5">
                 {def.width}×{def.depth} mm
@@ -352,7 +358,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                   className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     fixture.rotation === deg
                       ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                      : 'bg-slate-800/40 text-slate-400 hover:bg-slate-700/40'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   {deg}°
@@ -363,7 +369,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
           <button
             onClick={() => updateFixture(fixture.id, { rotation: (fixture.rotation + 90) % 360 })}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800/40 text-slate-300 text-xs font-medium hover:bg-slate-700/40 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             <RotateCw size={12} />
             Rotate 90°

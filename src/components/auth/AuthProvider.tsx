@@ -25,20 +25,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(isFirebaseConfigured());
   const firebaseEnabled = isFirebaseConfigured();
+  const [loading, setLoading] = useState(firebaseEnabled);
 
   useEffect(() => {
-    if (!firebaseEnabled) {
-      setLoading(false);
-      return;
-    }
+    if (!firebaseEnabled) return;
 
     const auth = getFirebaseAuth();
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
+    if (!auth) return;
 
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);

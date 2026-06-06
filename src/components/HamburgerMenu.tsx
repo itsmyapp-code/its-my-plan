@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  Menu, X, Upload, Download, FileJson, FileText,
+  Menu, X, Upload, FileJson, FileText,
   RefreshCw, Settings, LogIn, LogOut, HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -47,13 +47,13 @@ export function HamburgerMenu({
   const close = () => setOpen(false);
 
   const menuItemClass =
-    'flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800/80 hover:text-slate-100 transition-colors text-left';
+    'flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left';
 
   return (
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 transition-colors"
+        className="flex items-center justify-center w-9 h-9 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 transition-colors shadow-sm"
         aria-label="Menu"
         aria-expanded={open}
       >
@@ -61,8 +61,8 @@ export function HamburgerMenu({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-2 w-56 glass-panel rounded-xl border border-slate-700/60 shadow-xl z-50 py-2 animate-fade-in">
-          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="absolute top-full left-0 mt-2 w-56 glass-panel rounded-xl border border-slate-200 shadow-lg z-50 py-2 animate-fade-in">
+          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
             File
           </div>
 
@@ -82,9 +82,9 @@ export function HamburgerMenu({
             Plan Settings
           </button>
 
-          <div className="my-1.5 mx-3 border-t border-slate-700/40" />
+          <div className="my-1.5 mx-3 border-t border-slate-200" />
 
-          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
             View
           </div>
 
@@ -93,9 +93,9 @@ export function HamburgerMenu({
             {viewMode === '2d' ? 'Switch to 3D View' : 'Switch to 2D View'}
           </button>
 
-          <div className="my-1.5 mx-3 border-t border-slate-700/40" />
+          <div className="my-1.5 mx-3 border-t border-slate-200" />
 
-          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
             Print
           </div>
 
@@ -117,31 +117,28 @@ export function HamburgerMenu({
             {isPrinting3D ? 'Printing 3D…' : 'Print 3D PDF'}
           </button>
 
-          <div className="my-1.5 mx-3 border-t border-slate-700/40" />
+          <div className="my-1.5 mx-3 border-t border-slate-200" />
 
           <Link href="/help" className={`${menuItemClass} mx-1`} onClick={close}>
             <HelpCircle size={14} />
             Help & Instructions
           </Link>
 
-          {firebaseEnabled && (
-            <>
-              <div className="my-1.5 mx-3 border-t border-slate-700/40" />
-              {user ? (
-                <button
-                  className={`${menuItemClass} mx-1 text-red-400 hover:text-red-300`}
-                  onClick={async () => { await logout(); close(); }}
-                >
-                  <LogOut size={14} />
-                  Logout ({user.email?.split('@')[0]})
-                </button>
-              ) : (
-                <Link href="/login" className={`${menuItemClass} mx-1`} onClick={close}>
-                  <LogIn size={14} />
-                  Sign In / Sign Up
-                </Link>
-              )}
-            </>
+          <div className="my-1.5 mx-3 border-t border-slate-200" />
+
+          {user ? (
+            <button
+              className={`${menuItemClass} mx-1 text-red-600 hover:text-red-700 hover:bg-red-50`}
+              onClick={async () => { await logout(); close(); }}
+            >
+              <LogOut size={14} />
+              Logout ({user.email?.split('@')[0]})
+            </button>
+          ) : (
+            <Link href="/login" className={`${menuItemClass} mx-1`} onClick={close}>
+              <LogIn size={14} />
+              {firebaseEnabled ? 'Sign In / Sign Up' : 'Sign In (Setup Required)'}
+            </Link>
           )}
         </div>
       )}

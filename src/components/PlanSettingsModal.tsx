@@ -15,11 +15,11 @@ export function PlanSettingsModal({ onClose }: PlanSettingsModalProps) {
   const meta = plan.metadata;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="glass-panel w-full max-w-md rounded-2xl overflow-hidden mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/30">
-          <h2 className="text-sm font-semibold text-slate-200">Plan Settings</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300" aria-label="Close">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm animate-fade-in">
+      <div className="glass-panel w-full max-w-md rounded-2xl overflow-hidden mx-4 shadow-xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <h2 className="text-sm font-semibold text-slate-900">Plan Settings</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700" aria-label="Close">
             <X size={16} />
           </button>
         </div>
@@ -98,7 +98,7 @@ export function PlanSettingsModal({ onClose }: PlanSettingsModalProps) {
           </p>
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-700/30 flex justify-end">
+        <div className="px-6 py-4 border-t border-slate-200 flex justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors"

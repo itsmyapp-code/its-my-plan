@@ -3,7 +3,8 @@
 import { useCallback, useMemo } from 'react';
 import type { Wall, Point } from '@/types';
 import { SCALE_2D } from '@/constants';
-import { wallCorners, wallLength, wallMidpoint, wallAngleDeg, formatMM, wallDirection } from '@/utils/geometry';
+import { wallCorners, wallLength, wallMidpoint, wallAngleDeg, formatMM, wallDirection, getWallHeights } from '@/utils/geometry';
+import { CEILING_HEIGHT } from '@/constants';
 import { usePlanStore } from '@/store/usePlanStore';
 import { useToolStore } from '@/store/useToolStore';
 import { DimensionLabel } from './DimensionLabel';
@@ -27,6 +28,8 @@ export function WallSegment({ wall }: WallSegmentProps) {
   const len = wallLength(wall);
   const mid = wallMidpoint(wall);
   const angle = wallAngleDeg(wall);
+  const { h1, h2 } = getWallHeights(wall, CEILING_HEIGHT);
+  const isSloped = h1 !== h2;
 
   // Find all openings on this wall and sort them from P1 to P2
   const wallOpenings = useMemo(() => {
@@ -180,6 +183,49 @@ export function WallSegment({ wall }: WallSegmentProps) {
           >
             P2
           </text>
+        </>
+      )}
+
+      {/* Sloped wall height indicators at P1 / P2 */}
+      {(isSloped || isSelected) && (
+        <>
+          <text
+            x={ep1.x}
+            y={ep1.y + 14}
+            textAnchor="middle"
+            fill={isSloped ? '#fb923c' : 'var(--canvas-dimension-text)'}
+            fontSize={7}
+            fontFamily="var(--font-sans)"
+            fontWeight={600}
+            className="pointer-events-none select-none"
+          >
+            ↑ {formatMM(h1)}
+          </text>
+          <text
+            x={ep2.x}
+            y={ep2.y + 14}
+            textAnchor="middle"
+            fill={isSloped ? '#fb923c' : 'var(--canvas-dimension-text)'}
+            fontSize={7}
+            fontFamily="var(--font-sans)"
+            fontWeight={600}
+            className="pointer-events-none select-none"
+          >
+            ↑ {formatMM(h2)}
+          </text>
+          {isSloped && (
+            <line
+              x1={ep1.x}
+              y1={ep1.y + 4}
+              x2={ep2.x}
+              y2={ep2.y + 4}
+              stroke="#fb923c"
+              strokeWidth={0.6}
+              strokeDasharray="3 2"
+              className="pointer-events-none"
+              opacity={0.7}
+            />
+          )}
         </>
       )}
 

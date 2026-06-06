@@ -1,7 +1,7 @@
 // Utilities for positioning and validating openings on walls
 
 import type { Point, Wall, Opening } from '@/types';
-import { wallLength, wallAngle, wallDirection, wallNormal } from './geometry';
+import { wallLength, wallAngle, wallDirection, wallNormal, wallMidpoint, wallsBoundingBox } from './geometry';
 
 /**
  * Compute the world position and rotation for an opening on a wall.
@@ -68,6 +68,41 @@ export function hasOverlappingOpenings(
   );
 
   return wallOpenings.some((existing) => openingsOverlap(existing, newOpening));
+}
+
+/**
+ * Determine which side of a wall faces the room interior (heuristic using plan centroid).
+ */
+export function interiorSideOfWall(wall: Wall, allWalls: Wall[]): 1 | -1 {
+  if (allWalls.length === 0) return 1;
+  const normal = wallNormal(wall);
+  const mid = wallMidpoint(wall);
+  const centroid = wallsBoundingBox(allWalls).center;
+  const toInterior = { x: centroid.x - mid.x, y: centroid.y - mid.y };
+  const dot = normal.x * toInterior.x + normal.y * toInterior.y;
+  return dot >= 0 ? 1 : -1;
+}
+
+/**
+ * Default flipDirection so the door swings into the room, not out.
+ * flipDirection=false swings toward +wallNormal; true swings toward -wallNormal.
+ */
+export function getDefaultDoorFlipDirection(wall: Wall, allWalls: Wall[]): boolean {
+  return interiorSideOfWall(wall, allWalls) === -1;
+}
+
+/**
+ * 3D door leaf Y rotation (radians) matching the 2D swing arc.
+ * Positive local Z = +wallNormal in plan space.
+ */
+export function getDoorOpenRotationY(opening: Opening): number {
+  const openAngle = Math.PI / 3;
+  const swingPositiveNormal = !opening.flipDirection;
+  const hingeP1 = (opening.hingeSide ?? 'p1') === 'p1';
+  if (hingeP1) {
+    return swingPositiveNormal ? openAngle : -openAngle;
+  }
+  return swingPositiveNormal ? -openAngle : openAngle;
 }
 
 /**

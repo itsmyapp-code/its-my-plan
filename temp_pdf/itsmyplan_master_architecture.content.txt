@@ -1,0 +1,223 @@
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 1 of 7
+and interior overhaul pipelines:
+The asset layer is embedded with real-world metric dimensions optimized for structural mapping, space clearing,
+3. Complete UK Structural & Furniture Asset Matrix
+dollhouse perspectives via React Three Fiber.
+Concurrently, a passive 3D frame context interprets layout state mutations to generate instant real-time
+vector tracing, spatial clearance evaluations, and material takeoff lookups via an explicit SVG scene tree.
+• Dual Surface Pipeline: The UI maintains synchronized data rendering pipelines. The 2D component handles
+50mm interval grid matrix, preventing minor dimensional offsets during wall composition or asset alignment.
+• Metric Snapping Engine: Mouse coordinate streams canvas-wide clamp automatically to a sharp, deterministic 
+(mm). Unit conversion happens only at rendering boundaries.
+plumbing, all dimension figures are strictly parsed, stored, and mutated in integers representing millimeters
+• Absolute Metric Unit Uniformity: To guarantee accuracy for architectural components, structural framing, and
+2. Technical Domain Rules & Mechanics
+UI density, and native layout elements (SVG for 2D, WebGL/Three.js for 3D) to maximize rendering speed. 
+on Next.js client-side execution, React 19 hooks for instantaneous mechanical mathematics, Tailwind CSS for strict
+infrastructures, data collectors, middleware tracking loops, or unoptimized data structures. The runtime stack relies
+The system explicitly executes under a  Zero Server Framework Architecture. There are no heavy server
+drives a rich 3D visualization canvas layer. 
+app focuses on executing a completely stable, ultra-low-latency 2D structural drafting data model, which seamlessly
+operate completely within user-controlled environments. Rooted fundamentally in the Scalebanana Principle, the
+itsmyplan is a professional-grade room renovation, layout planning, and interior detailing system designed to
+1. System Vision & Architecture Strategy
+ENGINE
+COMPLETE CAD APPLICATION ENGINE SPECIFICATION FOR ANTIGRAVITY AI
+Architecture
+itsmyplan — Master Systems & Prompts
+----------------Page (0) Break----------------
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 2 of 7
+clearance
+Bedroom     uk-wardrobe-slider1200 mm × 500 mm   500mm standard sliding corridor access
+tolerance
+Bedroom     uk-wardrobe-standard600 mm × 600 mm   600mm structural swinging door operational
+clearances
+Bedroom     uk-bed-king    1500 mm × 2000 mm 650mm walking perimeter access lane
+three sides
+Bedroom     uk-bed-double   1350 mm × 1900 mm 600mm continuous walking pathway around
+clearance lane
+Kitchen     uk-kitchen-sink-double1000 mm × 500 mm   700mm continuous functional standing
+tower                        door utility
+Kitchen     uk-kitchen-appliance-600 mm × 600 mm   750mm clearance threshold to handle hot
+Kitchen     uk-kitchen-base-slim400 mm × 600 mm   600mm frontage clearance pathway line
+standard                      extraction
+Kitchen     uk-kitchen-base- 600 mm × 600 mm   600mm frontal operational zone for drawer
+dynamic sweep
+Bathroom     uk-shower-quadrant900 mm × 900 mm   700mm clear entry path along curved
+enclosure door
+Bathroom     uk-shower-square 900 mm × 900 mm   700mm clear access zone outside the
+Bathroom     uk-basin-cloakroom450 mm × 250 mm   600mm × 600mm front clearance footprint
+Bathroom     uk-basin-pedestal550 mm × 450 mm   700mm × 700mm operational workspace arc
+Bathroom     uk-wc-wall-hung 380 mm × 550 mm   700mm × 700mm clear frontal footprint box
+Bathroom     uk-wc-close-coupled400 mm × 650 mm   700mm × 700mm clear frontal footprint box
+edge
+Bathroom     uk-bath-compact 1500 mm × 700 mm   700mm clearance path along longitudinal
+edge
+Bathroom     uk-bath-standard 1700 mm × 700 mm   700mm clearance path along longitudinal
+IDENTIFIER        × D)
+CLASSIFICATION                                 CLEARANCE / ACTIVITY ZONES
+ASSET TYPE        STANDARD METRICS (W
+----------------Page (1) Break----------------
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 3 of 7
+framework (e.g., jsPDF). Text fields write out precise vector metrics alongside a formal architectural title block
+configurations, translating nodes directly into precise path metrics within a native client compilation document
+1. Page 1 — High-Fidelity 2D Scalable Layout: The print engine iterates through active structural canvas
+payload packages to an external print server or processing microservice. 
+The PDF engine compiles high-density layout summaries purely within client execution space without transferring
+5. Multi-Page Print Layout Specification
+}
+  activeMode: '2d' | '3d' | 'takeoff';
+  showServiceLayers: boolean;
+  showClearanceZones: boolean;
+  showDimensions: boolean;
+export interface AppViewSettings {
+}
+  showClearance: boolean; // Dynamic tracking property visibility toggle
+  rotation: number; // Angular orientation constraints locked to: 0, 90, 180, 270 degrees
+  y: number; // Plan view vertical midpoint vector position in mm
+  x: number; // Plan view horizontal midpoint vector position in mm
+  type: string; // Maps directly to standard library codes (e.g., 'uk-bath-standard')
+  id: string;
+export interface Fixture {
+}
+  flipDirection: boolean; // Structural vector axis modifier (swings/orientations)
+  zOffset: number; // Baseline vertical translation clearance from the subfloor level in mm
+  height: number; // Vertical structural span in mm (essential for takeoff subtractions)
+  width: number; // Horizontal metric structural sizing span in mm
+  distanceFromP1: number; // Distance interval in mm shifting from wall node p1 toward p2
+  type: 'door' | 'window';
+  wallId: string; // Relational mapping boundary linking the opening to a Wall
+  id: string;
+export interface Opening {
+}
+  thickness: number; // Default: 100mm (internal partition), 300mm (cavity exterior)
+  p2: Point; // Vector terminating point position node
+  p1: Point; // Vector starting point position node
+  id: string;
+export interface Wall {
+}
+  y: number; // Coordinate placement along Y plane in mm
+  x: number; // Coordinate placement along X plane in mm
+export interface Point {
+computational loop layers map identically across execution domains.
+The system data state must maintain strict static structures, guaranteeing that export files, database payloads, and
+4. Core Application Data Schemas
+----------------Page (2) Break----------------
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 4 of 7
+block borders.
+matching actual pixel densities, embedding the target raster view beautifully centered within structural report
+application pulls a compressed base64 image data payload straight from the WebGL context buffer surface
+enforces a continuous frame buffer presence via WebGL settings (preserveDrawingBuffer: true). The
+2. Page 2 — High-Resolution 3D Presentation View: To extract the 3D perspective context, the application
+drawing operations to prevent scaling pixelation during reproduction.
+including project parameters, design dates, scales, and user references. All lines are outputted as true vector
+----------------Page (3) Break----------------
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 5 of 7
+to active points. All walls must connect accurately.
+lines with real-time dynamic length text indicators (e.g., "3650 mm") positioned relative 
+active mouse movements directly to the standard 50mm grid interval. Provide user tracing 
+- Construct an active coordinate tracing loop handling canvas input boundaries. Clamp 
+### 2. High-Precision Vector 2D Snapping Grid
+state variations manifest.
+exposes a real-time React Three Fiber WebGL 3D preview layer updating continuously as 
+CSS. Left frame serves as the interactive 2D drafting floor plan panel; right frame 
+- Build a responsive horizontal side-by-side or tabbed workspace layout using Tailwind 
+### 1. Dual-Viewport Workspace Interface
+# Critical Subsystem Engineering Deliverables
+- SNAP_INTERVAL = 50 // Cursor tracking increments locked cleanly to 50mm vectors
+- CEILING_HEIGHT = 2400 // Fixed standard vertical ceiling projection wall bound in mm
+# Essential Global Engineering Constants
+back seamlessly to LocalStorage for offline/anonymous users)
+- Persistence Mechanism: Dual-Layer Pipeline (Firebase Auth + Cloud Firestore, falling 
+- PDF Compilation Engine: Client-side jsPDF or pdfmake orchestration layers
+three/drei
+- 3D Visualization Pipeline: Three.js executed through React Three Fiber (R3F) and @react-
+- 2D Precision Tracing Interface: High-Performance Native SVG Elements
+- Design / Presentation Architecture: Tailwind CSS
+- Core Reactive Engine: React 19 & Clean Component State Custom Hooks
+Rendering)
+- Environment Platform: Next.js (App Router, completely optimized for Client-Side 
+# Technical Framework Stack
+rendering contexts, and export processing must run entirely in the browser. 
+introduced. Operate entirely under a Zero Server structure: all logic, data parsing, 
+workflows must establish perfect mathematical reliability before structural cosmetics are 
+computational grid geometries, calculation state listeners, and document generation 
+Adhere strictly to the Scalebanana Principle: the foundational application structure, 
+# Core Philosophy (Scalebanana & Zero Server)
+capabilities. 
+takeoff reporting calculators, and comprehensive multi-page PDF blueprint print 
+paths with offline preservation fallbacks, smart clearance validation loops, material 
+an instant real-time 3D Dollhouse Preview panel, fully integrated Firebase Authentication 
+Build "itsmyplan" — a high-performance, browser-isolated 2D Room Layout Planner featuring 
+# System Objective
+engines.
+frameworks, computational math pipelines, and high-performance, client-side rendering 
+You are a Principal Software Architect specializing in lightweight interactive CAD layout 
+# Role & Context
+MASTER PROMPT INGESTION FRAME — COPY INTACT
+core architecture of your application:
+Provide the comprehensive instruction block below into your agentic AI engineering console to build or update the
+6. The Antigravity System Master Prompt (v3 Production Bundle)
+----------------Page (4) Break----------------
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 6 of 7
+### 9. Structural Isolation Mandate
+Accessibility Statement.
+Banner, Terms of Service agreements, privacy policies, cookie disclosure sheets, and an 
+FUTURE APPS". It must provide modular, accessible layout references for a Cookie Selection 
+legal structures. Name this specific operational framework bundle "COMPLIANCE MD FOR 
+- Include a structural layout placeholder module mapping essential site text assets and 
+### 8. Web Standards Compliance Integration
+framework.
+the uncompressed rendering frame centered cleanly inside a professional layout report 
+true`. Trigger a canvas buffer snapshot sequence via `gl.canvas.toDataURL()`, appending 
+  * Page 2 (3D Render Frame): Build the R3F canvas context with `preserveDrawingBuffer: 
+layout.
+using exact metric scale calculations. Append a formal project parameters title block 
+  * Page 1 (2D Layout Blueprint): Map SVG elements directly to sharp, native PDF lines 
+structure:
+- Build a single client execution worker parsing layout states into a clean document 
+### 7. Dual-Layer Multi-Page PDF Document Exporter
+evaluate validity parameters, and instantly restore the structural canvas context.
+  * Import Project: Read ingested file structures using the browser's FileReader API, 
+payload wrapper and prompt an instant client-side file browser download (`.json`).
+  * Export Project: Assemble active structural state objects into a structured JSON 
+- Build independent file data transfer actions:
+unauthenticated, fall back seamlessly to LocalStorage keys.
+{planId}`. Ensure no administrative global cross-reads occur. If working offline or 
+blueprints straight to Firestore under isolated document records: `/users/{uid}/plans/
+- Setup standard Firebase Auth integration interfaces. If authenticated, stream user 
+### 6. Firebase Identity Routing & Local Portability Engine
+"Material Takeoff Sheet".
+- Expose these parameters within a dedicated Tailwind overlay reporting container called 
+estimation like skirting board runs.
+  * Total Base Perimeter (Linear Metres): Track total baseline metrics for materials 
+of integrated doors and windows.
+standard 2400mm vertical ceiling height, mathematically subtracting the exact dimensions 
+  * Total Wall Surface Area (m²): Compute aggregate wall line lengths multiplied by the 
+  * Total Floor Area (m²): Compute flat horizontal space contours.
+dimensions based on current layout states:
+- Implement a pure JavaScript analytic utility layer computing architectural material 
+### 5. Automated Structural Material Takeoff Engine
+surrounding the active object boundary.
+fields as soft, translucent colored shapes (e.g., `` or `` with Tailwind alpha channels) 
+technical specification. Provide a top-level UI toggle switch to render these clearance 
+- Map custom clearance activity areas around all library fixtures as defined in the 
+### 4. Translucent Ergonomic Clearance Zones
+(600x600mm), Wardrobe Slider (1200x500mm).
+- Bedroom: Double Bed (1350x1900mm), King Bed (1500x2000mm), Wardrobe Standard 
+(600x600mm), Double Sink Module (1000x500mm).
+- Kitchen: Base Unit Standard (600x600mm), Base Unit Slim (400x600mm), Appliance Tower 
+(450x250mm), Square Shower (900x900mm), Quadrant Shower (900x900mm).
+(400x650mm), Wall-Hung WC (380x550mm), Pedestal Basin (550x450mm), Cloakroom Basin 
+- Bathroom: Standard Bath (1700x700mm), Compact Bath (1500x700mm), Close-Coupled WC 
+center on click and can rotate by 90-degree steps via the "R" key shortcut:
+definitions across Bathroom, Kitchen, and Bedroom domains. Assets drop onto the canvas 
+Provide a dense sidebar array exposing standard pre-configured metric structural component 
+### 3. Integrated UK Asset Blueprint Library
+----------------Page (5) Break----------------
+itsmyplan Engine Document • Confidential Production Blueprint                    Page 7 of 7
+highly maintainable code blocks using explicit TypeScript syntax typing loops throughout.
+server endpoints, tracking cookies, or analytical event logging tools. Deliver clean, 
+fully isolated within a dedicated React Custom Hook (`useRoomEditor`). Do not use remote 
+- Keep canvas logic loops, mouse track clamping operations, and rendering conversions 
+----------------Page (6) Break----------------

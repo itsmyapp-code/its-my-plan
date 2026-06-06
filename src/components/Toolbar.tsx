@@ -74,7 +74,7 @@ export function Toolbar() {
       ))}
 
       {/* Divider */}
-      <div className="w-6 h-px bg-slate-700/50 mx-auto my-1" />
+      <div className="w-6 h-px bg-slate-200 mx-auto my-1" />
 
       {/* Fixture palette toggle */}
       <button
@@ -107,7 +107,7 @@ export function Toolbar() {
       </button>
 
       {/* Divider */}
-      <div className="w-6 h-px bg-slate-700/50 mx-auto my-1" />
+      <div className="w-6 h-px bg-slate-200 mx-auto my-1" />
 
       {/* Action buttons */}
       {actions.map((action) => {
@@ -130,7 +130,7 @@ export function Toolbar() {
       })}
 
       {/* Divider */}
-      <div className="w-6 h-px bg-slate-700/50 mx-auto my-1" />
+      <div className="w-6 h-px bg-slate-200 mx-auto my-1" />
 
       {/* 3D / 2D toggle */}
       <button

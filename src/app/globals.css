@@ -1,32 +1,39 @@
 @import "tailwindcss";
 
 /* ========================================
-   itsmyplan — Design System Tokens
+   itsmyplan — Light Mode Design Tokens
    ======================================== */
 
 :root {
-  /* Brand colours derived from the logo */
-  --brand-blue: #3b82f6;
-  --brand-blue-light: #60a5fa;
-  --brand-orange: #f59e0b;
-  --brand-orange-light: #fbbf24;
+  /* Brand colours */
+  --brand-blue: #2563eb;
+  --brand-blue-light: #3b82f6;
+  --brand-orange: #ea580c;
+  --brand-orange-light: #f97316;
 
   /* Canvas colours */
-  --canvas-bg: #0c1222;
-  --canvas-grid-minor: rgba(71, 85, 105, 0.3);
-  --canvas-grid-major: rgba(71, 85, 105, 0.6);
+  --canvas-bg: #f8fafc;
+  --canvas-grid-minor: rgba(148, 163, 184, 0.35);
+  --canvas-grid-major: rgba(100, 116, 139, 0.45);
   --canvas-wall-fill: #94a3b8;
   --canvas-wall-fill-external: #64748b;
-  --canvas-wall-stroke: #cbd5e1;
-  --canvas-wall-selected: #3b82f6;
-  --canvas-snap-dot: #fbbf24;
-  --canvas-draw-preview: rgba(59, 130, 246, 0.6);
-  --canvas-dimension-text: #94a3b8;
+  --canvas-wall-stroke: #475569;
+  --canvas-wall-selected: #2563eb;
+  --canvas-snap-dot: #ea580c;
+  --canvas-draw-preview: rgba(37, 99, 235, 0.55);
+  --canvas-dimension-text: #475569;
 
-  /* Panel glass effect */
-  --glass-bg: rgba(15, 23, 42, 0.85);
-  --glass-border: rgba(71, 85, 105, 0.4);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* Panel glass effect — light frosted */
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(203, 213, 225, 0.9);
+  --glass-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+
+  /* App surfaces */
+  --app-bg: #f1f5f9;
+  --app-surface: #ffffff;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-border: #e2e8f0;
 
   /* Fonts */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -42,10 +49,12 @@
 
 body {
   font-family: var(--font-sans);
+  background-color: var(--app-bg);
+  color: var(--app-text);
 }
 
 /* ========================================
-   Scrollbar (dark themed)
+   Scrollbar
    ======================================== */
 
 ::-webkit-scrollbar {
@@ -58,12 +67,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: rgba(148, 163, 184, 0.5);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.6);
+  background: rgba(100, 116, 139, 0.7);
 }
 
 /* ========================================
@@ -122,17 +131,6 @@ body {
   }
 }
 
-@keyframes snap-ping {
-  0% {
-    r: 4;
-    opacity: 1;
-  }
-  100% {
-    r: 12;
-    opacity: 0;
-  }
-}
-
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
@@ -147,12 +145,12 @@ body {
 
 .tool-btn {
   @apply flex items-center justify-center w-10 h-10 rounded-lg
-         text-slate-400 transition-all duration-150 ease-out
-         hover:text-slate-100 hover:bg-slate-700/50;
+         text-slate-600 transition-all duration-150 ease-out
+         hover:text-slate-900 hover:bg-slate-100;
 }
 
 .tool-btn.active {
-  @apply text-white bg-blue-600/30 ring-1 ring-blue-500/50;
+  @apply text-blue-700 bg-blue-50 ring-1 ring-blue-200;
 }
 
 .tool-btn:active {
@@ -164,7 +162,7 @@ body {
    ======================================== */
 
 .tooltip {
-  @apply absolute z-50 px-2 py-1 text-xs font-medium text-slate-100
+  @apply absolute z-50 px-2 py-1 text-xs font-medium text-slate-800
          rounded-md whitespace-nowrap pointer-events-none;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -177,11 +175,11 @@ body {
    ======================================== */
 
 .prop-input {
-  @apply w-full px-2.5 py-1.5 text-sm bg-slate-800/60 border border-slate-700
-         rounded-md text-slate-200 outline-none transition-colors
-         focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30;
+  @apply w-full px-2.5 py-1.5 text-sm bg-white border border-slate-200
+         rounded-md text-slate-900 outline-none transition-colors
+         focus:border-blue-400 focus:ring-1 focus:ring-blue-200;
 }
 
 .prop-label {
-  @apply text-xs font-medium text-slate-400 uppercase tracking-wider;
+  @apply text-xs font-medium text-slate-500 uppercase tracking-wider;
 }

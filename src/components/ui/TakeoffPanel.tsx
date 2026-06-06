@@ -17,13 +17,13 @@ export function TakeoffPanel({ onClose }: TakeoffPanelProps) {
   return (
     <div className="glass-panel absolute right-3 bottom-4 z-40 w-72 rounded-2xl overflow-hidden animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/30">
-        <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+        <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
           Material Takeoff Sheet
         </h3>
         <button
           onClick={onClose}
-          className="text-slate-500 hover:text-slate-300 transition-colors"
+          className="text-slate-400 hover:text-slate-700 transition-colors"
           aria-label="Close"
         >
           <X size={14} />
@@ -33,10 +33,10 @@ export function TakeoffPanel({ onClose }: TakeoffPanelProps) {
       <div className="p-4 space-y-3">
         {/* Floor Area */}
         <div className="flex items-center gap-3 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-          <Square size={16} className="text-emerald-400 shrink-0" />
+          <Square size={16} className="text-emerald-600 shrink-0" />
           <div className="flex-1">
             <div className="text-[10px] text-slate-500 uppercase tracking-wider">Total Floor Area</div>
-            <div className="text-lg font-bold text-emerald-400">
+            <div className="text-lg font-bold text-emerald-600">
               {takeoff.totalFloorArea.toFixed(2)} <span className="text-xs font-normal text-slate-500">m²</span>
             </div>
           </div>

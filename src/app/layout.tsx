@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#f1f5f9",
 };
 
 export const metadata: Metadata = {
@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="h-full bg-slate-950 text-slate-100 font-sans antialiased">
+      <body className="h-full bg-slate-100 text-slate-900 font-sans antialiased">
         <AuthProvider>
           {children}
         </AuthProvider>

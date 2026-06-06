@@ -14,7 +14,7 @@ export function Canvas3D({ id = 'canvas-3d' }: Canvas3DProps) {
         camera={{ position: [5, 6, 5], fov: 50, near: 0.1, far: 200 }}
         shadows
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
-        style={{ background: '#0c1222' }}
+        style={{ background: '#e2e8f0' }}
       >
         <Scene3D />
       </Canvas>

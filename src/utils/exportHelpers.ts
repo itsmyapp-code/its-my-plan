@@ -78,62 +78,84 @@ function drawPDFDecorations(
   plan: RoomPlan,
   docWidth: number,
   docHeight: number
-): void {
+): number {
   const meta = getMetadata(plan);
 
-  doc.setFillColor(15, 23, 42);
+  // White print-friendly page
+  doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, docWidth, docHeight, 'F');
 
-  doc.setDrawColor(30, 41, 59);
-  doc.setLineWidth(1);
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.6);
   doc.rect(8, 8, docWidth - 16, docHeight - 16, 'S');
 
-  doc.setTextColor(255, 255, 255);
+  // Header
+  doc.setTextColor(30, 41, 59);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('its my plan', 15, 22);
+  doc.setFontSize(18);
+  doc.text('its my plan', 15, 20);
 
   doc.setFillColor(59, 130, 246);
-  doc.rect(15, 25, 4, 4, 'F');
+  doc.rect(15, 22, 4, 4, 'F');
   doc.setFillColor(249, 115, 22);
-  doc.rect(20, 25, 4, 4, 'F');
+  doc.rect(20, 22, 4, 4, 'F');
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.setTextColor(148, 163, 184);
-  doc.text(title, 28, 26);
-  doc.text(subtitle, docWidth - 15, 22, { align: 'right' });
+  doc.setTextColor(71, 85, 105);
+  doc.text(title, 28, 23);
+  doc.text(subtitle, docWidth - 15, 20, { align: 'right' });
 
-  // Title block — job metadata
-  const blockY = docHeight - 28;
-  doc.setDrawColor(51, 65, 85);
-  doc.setLineWidth(0.5);
-  doc.line(15, blockY - 4, docWidth - 15, blockY - 4);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(15, 28, docWidth - 15, 28);
+
+  // Footer zone — fixed height so metadata never overlaps branding
+  const FOOTER_HEIGHT = 34;
+  const footerTop = docHeight - FOOTER_HEIGHT;
+  const metaLineHeight = 4.5;
+  const metaStartY = footerTop + 5;
+  const brandDividerY = docHeight - 12;
+  const brandTextY = docHeight - 7;
+
+  doc.setDrawColor(200, 200, 200);
+  doc.line(15, footerTop, docWidth - 15, footerTop);
 
   doc.setFontSize(8);
-  doc.setTextColor(148, 163, 184);
-  const rows = [
+  doc.setTextColor(51, 65, 85);
+
+  const leftRows = [
     `Job: ${meta.jobNumber || '—'}`,
+    ...(meta.clientName ? [`Client: ${meta.clientName}`] : []),
     `Version: ${meta.version || '1.0'}`,
     `Operator: ${meta.operator || '—'}`,
     `Scale: ${meta.scale || DEFAULT_PRINT_SCALE}`,
     `Date: ${new Date().toLocaleDateString('en-GB')}`,
   ];
-  if (meta.clientName) rows.splice(1, 0, `Client: ${meta.clientName}`);
 
-  rows.forEach((row, i) => {
-    doc.text(row, 15, blockY + i * 4);
+  const rightRows = [
+    `Plan: ${plan.name}`,
+    `Exported: ${new Date().toLocaleString('en-GB')}`,
+  ];
+
+  leftRows.forEach((row, i) => {
+    doc.text(row, 15, metaStartY + i * metaLineHeight);
   });
 
-  doc.text(`Plan: ${plan.name}`, docWidth - 15, blockY, { align: 'right' });
-  doc.text(`Exported: ${new Date().toLocaleString('en-GB')}`, docWidth - 15, blockY + 4, { align: 'right' });
+  rightRows.forEach((row, i) => {
+    doc.text(row, docWidth - 15, metaStartY + i * metaLineHeight, { align: 'right' });
+  });
 
-  doc.setDrawColor(51, 65, 85);
-  doc.line(15, docHeight - 17, docWidth - 15, docHeight - 17);
-  doc.setFontSize(9);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(15, brandDividerY, docWidth - 15, brandDividerY);
+
+  doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text('itsmyplan.co.uk  |  Design Tooling', 15, docHeight - 11);
-  doc.text('Client-Side Browser Plan - Confidential', docWidth - 15, docHeight - 11, { align: 'right' });
+  doc.text('itsmyplan.co.uk  |  Design Tooling', 15, brandTextY);
+  doc.text('Client-Side Browser Plan — Confidential', docWidth - 15, brandTextY, { align: 'right' });
+
+  // Return Y coordinate where drawing area ends
+  return footerTop - 4;
 }
 
 /**
@@ -207,7 +229,7 @@ export async function export2DPDF(plan: RoomPlan, svgSelector: string): Promise<
     const docHeight = doc.internal.pageSize.getHeight();
     const meta = getMetadata(plan);
 
-    drawPDFDecorations(
+    const drawingBottom = drawPDFDecorations(
       doc,
       `Project: ${plan.name}`,
       `2D Blueprint — Scale ${meta.scale || DEFAULT_PRINT_SCALE}`,
@@ -216,7 +238,7 @@ export async function export2DPDF(plan: RoomPlan, svgSelector: string): Promise<
       docHeight
     );
 
-    const imageBox = { x: 15, y: 38, w: docWidth - 30, h: docHeight - 72 };
+    const imageBox = { x: 15, y: 32, w: docWidth - 30, h: drawingBottom - 32 };
     const svgElement = document.querySelector(svgSelector) as SVGSVGElement | null;
 
     if (svgElement) {
@@ -227,22 +249,22 @@ export async function export2DPDF(plan: RoomPlan, svgSelector: string): Promise<
 
         // Scale annotation below drawing
         doc.setFontSize(9);
-        doc.setTextColor(148, 163, 184);
+        doc.setTextColor(71, 85, 105);
         doc.text(
           `Drawing scale: ${meta.scale || DEFAULT_PRINT_SCALE}  |  All dimensions in millimetres`,
           docWidth / 2,
-          imageBox.y + imageBox.h + 6,
+          Math.min(drawingBottom - 2, imageBox.y + imageBox.h + 5),
           { align: 'center' }
         );
       } catch (err) {
         console.error('Failed to convert 2D SVG to image:', err);
         doc.setFontSize(14);
-        doc.setTextColor(239, 68, 68);
+        doc.setTextColor(185, 28, 28);
         doc.text('Failed to render 2D Blueprint preview', 30, 80);
       }
     } else {
       doc.setFontSize(12);
-      doc.setTextColor(148, 163, 184);
+      doc.setTextColor(71, 85, 105);
       doc.text('No 2D viewport available', 30, 80);
     }
 
@@ -264,7 +286,7 @@ export async function export3DPDF(plan: RoomPlan, canvas3dSelector: string): Pro
     const docWidth = doc.internal.pageSize.getWidth();
     const docHeight = doc.internal.pageSize.getHeight();
 
-    drawPDFDecorations(
+    const drawingBottom = drawPDFDecorations(
       doc,
       `Project: ${plan.name}`,
       '3D Dollhouse View',
@@ -273,7 +295,7 @@ export async function export3DPDF(plan: RoomPlan, canvas3dSelector: string): Pro
       docHeight
     );
 
-    const imageBox = { x: 15, y: 38, w: docWidth - 30, h: docHeight - 72 };
+    const imageBox = { x: 15, y: 32, w: docWidth - 30, h: drawingBottom - 32 };
     const canvasElement = document.querySelector(canvas3dSelector);
     let canvas3d: HTMLCanvasElement | null = null;
 
@@ -300,12 +322,12 @@ export async function export3DPDF(plan: RoomPlan, canvas3dSelector: string): Pro
       } catch (err) {
         console.error('Failed to convert 3D Canvas to image:', err);
         doc.setFontSize(14);
-        doc.setTextColor(239, 68, 68);
+        doc.setTextColor(185, 28, 28);
         doc.text('Failed to render 3D preview', 30, 80);
       }
     } else {
       doc.setFontSize(12);
-      doc.setTextColor(148, 163, 184);
+      doc.setTextColor(71, 85, 105);
       doc.text('No 3D viewport available — switch to 3D view first', 30, 80);
     }
 
@@ -345,10 +367,10 @@ function svgToPngDataUrl(
 
       const style = document.createElement('style');
       style.textContent = `
-        svg { background: #0f172a !important; }
-        text { fill: #94a3b8 !important; font-family: sans-serif; }
-        .grid-line { stroke: #1e293b; }
-        .grid-major { stroke: #334155; }
+        svg { background: #ffffff !important; }
+        text { fill: #334155 !important; font-family: sans-serif; }
+        .grid-line { stroke: #e2e8f0; }
+        .grid-major { stroke: #cbd5e1; }
       `;
       clonedSvg.appendChild(style);
 
@@ -363,7 +385,7 @@ function svgToPngDataUrl(
         canvas.height = exportHeight;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.fillStyle = '#0f172a';
+          ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, exportWidth, exportHeight);
           ctx.drawImage(image, 0, 0);
           const dataUrl = canvas.toDataURL('image/png');
