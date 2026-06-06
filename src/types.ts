@@ -65,7 +65,7 @@ export interface AppViewSettings {
 }
 
 // Tool modes for the 2D canvas
-export type ToolMode = 'select' | 'draw-wall' | 'place-opening-door' | 'place-opening-window' | 'place-fixture' | 'pan';
+export type ToolMode = 'select' | 'draw-wall' | 'place-opening-door' | 'place-opening-window' | 'place-fixture' | 'pan' | 'measure';
 
 // Selection state
 export interface SelectionState {

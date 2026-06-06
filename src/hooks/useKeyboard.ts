@@ -40,6 +40,11 @@ export function useKeyboard() {
           if (!e.ctrlKey && !e.metaKey) setTool('pan');
           break;
 
+        case 'm':
+        case 'M':
+          if (!e.ctrlKey && !e.metaKey) setTool('measure');
+          break;
+
         case 'd':
         case 'D':
           if (!e.ctrlKey && !e.metaKey) setTool('place-opening-door');

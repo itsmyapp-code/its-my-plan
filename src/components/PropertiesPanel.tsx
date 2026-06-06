@@ -2,9 +2,9 @@
 
 import { usePlanStore } from '@/store/usePlanStore';
 import { wallLength, wallAngleDeg, formatMM, wallDirection } from '@/utils/geometry';
-import { clampOpeningPosition } from '@/utils/openingHelpers';
+import { clampOpeningPosition, hasOverlappingOpenings } from '@/utils/openingHelpers';
 import { getFixtureDefinition } from '@/data/fixtures';
-import { X, RotateCw, FlipHorizontal2, Trash2 } from 'lucide-react';
+import { X, RotateCw, FlipHorizontal2, Trash2, Copy } from 'lucide-react';
 
 interface PropertiesPanelProps {
   onClose: () => void;
@@ -14,7 +14,9 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
   const selection = usePlanStore((s) => s.selection);
   const plan = usePlanStore((s) => s.plan);
   const updateWall = usePlanStore((s) => s.updateWall);
+  const addOpening = usePlanStore((s) => s.addOpening);
   const updateOpening = usePlanStore((s) => s.updateOpening);
+  const addFixture = usePlanStore((s) => s.addFixture);
   const updateFixture = usePlanStore((s) => s.updateFixture);
   const deleteSelected = usePlanStore((s) => s.deleteSelected);
 
@@ -287,6 +289,60 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
           </button>
 
           <button
+            onClick={() => {
+              if (!wall) return;
+
+              const offset = opening.width + 200;
+              let newDist = clampOpeningPosition(wall, {
+                width: opening.width,
+                distanceFromP1: opening.distanceFromP1 + offset,
+              });
+
+              // If the first choice overlaps, try the opposite side.
+              if (hasOverlappingOpenings(wall, plan.openings, { width: opening.width, distanceFromP1: newDist })) {
+                newDist = clampOpeningPosition(wall, {
+                  width: opening.width,
+                  distanceFromP1: opening.distanceFromP1 - offset,
+                });
+              }
+
+              // If still overlapping, scan wall for first available slot.
+              if (hasOverlappingOpenings(wall, plan.openings, { width: opening.width, distanceFromP1: newDist })) {
+                const minCenter = opening.width / 2;
+                const maxCenter = wallLength(wall) - opening.width / 2;
+                let found: number | null = null;
+                for (let d = minCenter; d <= maxCenter; d += 50) {
+                  if (!hasOverlappingOpenings(wall, plan.openings, { width: opening.width, distanceFromP1: d })) {
+                    found = d;
+                    break;
+                  }
+                }
+
+                if (found === null) {
+                  alert('No free space on this wall to duplicate this opening.');
+                  return;
+                }
+                newDist = found;
+              }
+
+              addOpening({
+                wallId: opening.wallId,
+                type: opening.type,
+                distanceFromP1: newDist,
+                width: opening.width,
+                height: opening.height,
+                zOffset: opening.zOffset,
+                flipDirection: opening.flipDirection,
+                hingeSide: opening.hingeSide,
+              });
+            }}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            <Copy size={12} />
+            Duplicate {opening.type === 'door' ? 'Door' : 'Window'}
+          </button>
+
+          <button
             onClick={deleteSelected}
             className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors"
           >
@@ -373,6 +429,23 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
           >
             <RotateCw size={12} />
             Rotate 90°
+          </button>
+
+          <button
+            onClick={() => {
+              const offset = 200;
+              addFixture({
+                type: fixture.type,
+                x: fixture.x + offset,
+                y: fixture.y + offset,
+                rotation: fixture.rotation,
+                showClearance: fixture.showClearance,
+              });
+            }}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            <Copy size={12} />
+            Duplicate Fixture
           </button>
 
           <button

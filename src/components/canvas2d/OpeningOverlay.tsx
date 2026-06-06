@@ -60,9 +60,21 @@ export function OpeningOverlay({ onDragStart }: OpeningOverlayProps) {
           const arcRadius = opening.width * SCALE_2D;
           const arcEndX = pivotX + normal.x * arcRadius * flipMult;
           const arcEndY = pivotY + normal.y * arcRadius * flipMult;
+          const hitStroke = Math.max(wall.thickness * SCALE_2D + 12, 18);
 
           return (
             <g key={opening.id} onClick={handleClick} onPointerDown={handleDragStart}>
+              {/* Large transparent hit line so doors are easy to pick/select */}
+              <line
+                x1={gapStart.x}
+                y1={gapStart.y}
+                x2={gapEnd.x}
+                y2={gapEnd.y}
+                stroke="transparent"
+                strokeWidth={hitStroke}
+                style={{ cursor: activeTool === 'select' ? 'grab' : undefined }}
+              />
+
               <line
                 x1={gapStart.x}
                 y1={gapStart.y}
@@ -119,9 +131,21 @@ export function OpeningOverlay({ onDragStart }: OpeningOverlayProps) {
         // Window
         const wallThickPx = wall.thickness * SCALE_2D;
         const n = { x: normal.x * (wallThickPx / 2) * 0.7, y: normal.y * (wallThickPx / 2) * 0.7 };
+        const hitStroke = Math.max(wallThickPx + 12, 18);
 
         return (
           <g key={opening.id} onClick={handleClick} onPointerDown={handleDragStart}>
+            {/* Large transparent hit line so windows are easy to pick/select */}
+            <line
+              x1={gapStart.x}
+              y1={gapStart.y}
+              x2={gapEnd.x}
+              y2={gapEnd.y}
+              stroke="transparent"
+              strokeWidth={hitStroke}
+              style={{ cursor: activeTool === 'select' ? 'grab' : undefined }}
+            />
+
             <line
               x1={gapStart.x}
               y1={gapStart.y}

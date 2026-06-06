@@ -5,8 +5,8 @@ import { usePlanStore } from '@/store/usePlanStore';
 import { useToolStore } from '@/store/useToolStore';
 import { useUIStore } from '@/store/useUIStore';
 import { resolveSnap } from '@/utils/snapping';
-import { SCALE_2D, MIN_WALL_LENGTH, GRID_SNAP, GRID_MAJOR } from '@/constants';
-import { distance, projectPointOntoWall, wallLength } from '@/utils/geometry';
+import { SCALE_2D, MIN_WALL_LENGTH } from '@/constants';
+import { distance, projectPointOntoWall, wallLength, formatMM } from '@/utils/geometry';
 import { clampOpeningPosition, getDefaultDoorFlipDirection } from '@/utils/openingHelpers';
 import { GridLayer } from './GridLayer';
 import { WallLayer } from './WallLayer';
@@ -21,22 +21,26 @@ export function Canvas2D() {
   const isPanning = useRef(false);
   const lastPanPos = useRef<{ x: number; y: number } | null>(null);
 
-  const { plan, addWall, select, clearSelection } = usePlanStore();
-  const { activeTool, isDrawing, drawStart, drawPreview, startDrawing, updateDrawPreview, finishDrawing, cancelDrawing } = useToolStore();
+  const { plan, addWall, updateWall, select, clearSelection } = usePlanStore();
+  const { activeTool, isDrawing, drawStart, drawPreview, startDrawing, updateDrawPreview, cancelDrawing } = useToolStore();
   const { viewport, setViewport } = useUIStore();
 
   const draggedElement = useRef<{
     id: string;
-    type: 'fixture' | 'opening';
+    type: 'fixture' | 'opening' | 'wall';
     startX: number;
     startY: number;
     initialX: number;
     initialY: number;
+    initialP1?: Point;
+    initialP2?: Point;
     wallId?: string;
     initialDist?: number;
   } | null>(null);
   const [snapResult, setSnapResult] = useState<SnapResult | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
+  const [measureStart, setMeasureStart] = useState<Point | null>(null);
+  const [measureEnd, setMeasureEnd] = useState<Point | null>(null);
 
   // Track keyboard shortcuts
   useEffect(() => {
@@ -120,6 +124,26 @@ export function Canvas2D() {
     }
   }, [activeTool, plan.openings, screenToMM]);
 
+  const handleWallDragStart = useCallback((id: string, e: React.PointerEvent<SVGElement>) => {
+    if (activeTool !== 'select') return;
+    const mm = screenToMM(e.clientX, e.clientY);
+    const wall = plan.walls.find((w) => w.id === id);
+    if (!wall) return;
+
+    draggedElement.current = {
+      id,
+      type: 'wall',
+      startX: mm.x,
+      startY: mm.y,
+      initialX: 0,
+      initialY: 0,
+      initialP1: { ...wall.p1 },
+      initialP2: { ...wall.p2 },
+    };
+
+    (e.currentTarget as SVGElement).setPointerCapture(e.pointerId);
+  }, [activeTool, plan.walls, screenToMM]);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       // Middle mouse or Space+left for panning
@@ -133,6 +157,22 @@ export function Canvas2D() {
       if (e.button !== 0) return;
 
       const mm = screenToMM(e.clientX, e.clientY);
+
+      if (activeTool === 'measure') {
+        const snap = resolveSnap(mm, plan.walls, {
+          shiftHeld,
+          origin: measureStart ?? undefined,
+        });
+
+        if (!measureStart || measureEnd) {
+          setMeasureStart(snap.point);
+          setMeasureEnd(null);
+        } else {
+          setMeasureEnd(snap.point);
+        }
+        setSnapResult(snap);
+        return;
+      }
 
       if (activeTool === 'draw-wall') {
         const snap = resolveSnap(mm, plan.walls, {
@@ -199,7 +239,7 @@ export function Canvas2D() {
         clearSelection();
       }
     },
-    [activeTool, isDrawing, drawStart, plan.walls, shiftHeld, screenToMM, startDrawing, addWall, clearSelection]
+    [activeTool, isDrawing, drawStart, plan.walls, shiftHeld, screenToMM, startDrawing, addWall, clearSelection, measureStart, measureEnd]
   );
 
   const handlePointerMove = useCallback(
@@ -207,6 +247,30 @@ export function Canvas2D() {
       // Handle dragging
       if (draggedElement.current) {
         const mm = screenToMM(e.clientX, e.clientY);
+
+        if (draggedElement.current.type === 'wall' && draggedElement.current.initialP1 && draggedElement.current.initialP2) {
+          const dx = mm.x - draggedElement.current.startX;
+          const dy = mm.y - draggedElement.current.startY;
+
+          let moveX = dx;
+          let moveY = dy;
+          if (!shiftHeld) {
+            moveX = Math.round(moveX / 50) * 50;
+            moveY = Math.round(moveY / 50) * 50;
+          }
+
+          updateWall(draggedElement.current.id, {
+            p1: {
+              x: draggedElement.current.initialP1.x + moveX,
+              y: draggedElement.current.initialP1.y + moveY,
+            },
+            p2: {
+              x: draggedElement.current.initialP2.x + moveX,
+              y: draggedElement.current.initialP2.y + moveY,
+            },
+          });
+          return;
+        }
 
         if (draggedElement.current.type === 'opening' && draggedElement.current.wallId) {
           const wall = plan.walls.find(w => w.id === draggedElement.current!.wallId);
@@ -252,7 +316,7 @@ export function Canvas2D() {
       const mm = screenToMM(e.clientX, e.clientY);
       const snap = resolveSnap(mm, plan.walls, {
         shiftHeld,
-        origin: drawStart ?? undefined,
+        origin: (activeTool === 'measure' ? measureStart : drawStart) ?? undefined,
       });
 
       if (isDrawing) {
@@ -260,7 +324,7 @@ export function Canvas2D() {
       }
       setSnapResult(snap);
     },
-    [isPanning, viewport, isDrawing, plan.walls, shiftHeld, drawStart, screenToMM, setViewport, updateDrawPreview]
+    [isPanning, viewport, isDrawing, plan.walls, shiftHeld, drawStart, screenToMM, setViewport, updateDrawPreview, activeTool, measureStart, measureEnd, updateWall]
   );
 
   const handlePointerUp = useCallback(
@@ -320,11 +384,21 @@ export function Canvas2D() {
       ? 'cursor-draw'
       : activeTool === 'pan'
       ? 'cursor-pan'
+      : activeTool === 'measure'
+      ? 'cursor-draw'
       : 'cursor-select';
 
-  // SVG viewBox dimensions (initial area in px units)
-  const viewBoxWidth = svgRef.current?.clientWidth ?? 1200;
-  const viewBoxHeight = svgRef.current?.clientHeight ?? 800;
+  const measureStartPx = measureStart
+    ? { x: measureStart.x * SCALE_2D, y: measureStart.y * SCALE_2D }
+    : null;
+  const measureLivePoint = measureEnd ?? ((activeTool === 'measure' && measureStart && snapResult) ? snapResult.point : null);
+  const measureEndPx = measureLivePoint
+    ? { x: measureLivePoint.x * SCALE_2D, y: measureLivePoint.y * SCALE_2D }
+    : null;
+  const measureLen = measureStart && measureLivePoint ? distance(measureStart, measureLivePoint) : 0;
+  const measureMid = measureStartPx && measureEndPx
+    ? { x: (measureStartPx.x + measureEndPx.x) / 2, y: (measureStartPx.y + measureEndPx.y) / 2 }
+    : null;
 
   return (
     <svg
@@ -343,14 +417,14 @@ export function Canvas2D() {
       >
         {/* Background grid */}
         <GridLayer
-          width={viewBoxWidth / viewport.zoom}
-          height={viewBoxHeight / viewport.zoom}
+          width={1200 / viewport.zoom}
+          height={800 / viewport.zoom}
           panX={viewport.panX}
           panY={viewport.panY}
         />
 
         {/* Wall segments */}
-        <WallLayer />
+        <WallLayer onWallDragStart={handleWallDragStart} />
 
         {/* Openings on walls */}
         <OpeningOverlay onDragStart={handleOpeningDragStart} />
@@ -361,6 +435,47 @@ export function Canvas2D() {
         {/* Drawing preview line */}
         {isDrawing && drawStart && drawPreview && (
           <DrawingCursor start={drawStart} end={drawPreview} />
+        )}
+
+        {/* Measure overlay */}
+        {measureStartPx && measureEndPx && (
+          <g className="pointer-events-none">
+            <line
+              x1={measureStartPx.x}
+              y1={measureStartPx.y}
+              x2={measureEndPx.x}
+              y2={measureEndPx.y}
+              stroke="var(--brand-orange)"
+              strokeWidth={1}
+              strokeDasharray="4 3"
+            />
+            <circle cx={measureStartPx.x} cy={measureStartPx.y} r={2.5} fill="var(--brand-orange)" />
+            <circle cx={measureEndPx.x} cy={measureEndPx.y} r={2.5} fill="var(--brand-orange)" />
+            {measureMid && (
+              <g>
+                <rect
+                  x={measureMid.x - 34}
+                  y={measureMid.y - 9}
+                  width={68}
+                  height={18}
+                  rx={5}
+                  fill="rgba(15, 23, 42, 0.9)"
+                  stroke="rgba(148, 163, 184, 0.45)"
+                  strokeWidth={0.5}
+                />
+                <text
+                  x={measureMid.x}
+                  y={measureMid.y + 3.5}
+                  textAnchor="middle"
+                  fontSize={8}
+                  fontFamily="var(--font-sans)"
+                  fill="#f8fafc"
+                >
+                  {formatMM(measureLen)}
+                </text>
+              </g>
+            )}
+          </g>
         )}
 
         {/* Snap indicator */}

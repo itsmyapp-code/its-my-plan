@@ -11,9 +11,10 @@ import { DimensionLabel } from './DimensionLabel';
 
 interface WallSegmentProps {
   wall: Wall;
+  onDragStart: (id: string, e: React.PointerEvent<SVGElement>) => void;
 }
 
-export function WallSegment({ wall }: WallSegmentProps) {
+export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
   const selection = usePlanStore((s) => s.selection);
   const select = usePlanStore((s) => s.select);
   const activeTool = useToolStore((s) => s.activeTool);
@@ -109,6 +110,16 @@ export function WallSegment({ wall }: WallSegmentProps) {
     [activeTool, select, wall.id]
   );
 
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<SVGElement>) => {
+      if (activeTool !== 'select') return;
+      e.stopPropagation();
+      select('wall', wall.id);
+      onDragStart(wall.id, e);
+    },
+    [activeTool, select, wall.id, onDragStart]
+  );
+
   // Endpoint dots
   const ep1 = { x: wall.p1.x * SCALE_2D, y: wall.p1.y * SCALE_2D };
   const ep2 = { x: wall.p2.x * SCALE_2D, y: wall.p2.y * SCALE_2D };
@@ -131,7 +142,7 @@ export function WallSegment({ wall }: WallSegmentProps) {
         className="transition-colors duration-150"
         style={{ cursor: activeTool === 'select' ? 'pointer' : undefined }}
         onClick={handleClick}
-        onPointerDown={handleClick}
+        onPointerDown={handlePointerDown}
       />
 
       {/* Center line (thin) */}
