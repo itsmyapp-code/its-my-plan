@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bath, UtensilsCrossed, Bed, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Bath, UtensilsCrossed, Bed, Sofa, Zap, Droplets, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { FIXTURE_LIBRARY, type FixtureDefinition } from '@/data/fixtures';
 import { usePlanStore } from '@/store/usePlanStore';
 import { useToolStore } from '@/store/useToolStore';
@@ -11,12 +11,18 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   bathroom: <Bath size={14} />,
   kitchen: <UtensilsCrossed size={14} />,
   bedroom: <Bed size={14} />,
+  furniture: <Sofa size={14} />,
+  electrical: <Zap size={14} />,
+  plumbing: <Droplets size={14} />,
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   bathroom: 'Bathroom',
   kitchen: 'Kitchen',
   bedroom: 'Bedroom',
+  furniture: 'Furniture',
+  electrical: 'Electrics',
+  plumbing: 'Plumbing',
 };
 
 interface FixturePaletteProps {
@@ -28,7 +34,7 @@ export function FixturePalette({ onClose }: FixturePaletteProps) {
   const setTool = useToolStore((s) => s.setTool);
   const [expandedCat, setExpandedCat] = useState<string>('bathroom');
 
-  const categories = ['bathroom', 'kitchen', 'bedroom'] as const;
+  const categories = Array.from(new Set(FIXTURE_LIBRARY.map((f) => f.category)));
 
   const handlePlace = (def: FixtureDefinition) => {
     const snapped = snapToGrid({ x: 2500, y: 2500 });
@@ -37,7 +43,9 @@ export function FixturePalette({ onClose }: FixturePaletteProps) {
       x: snapped.x,
       y: snapped.y,
       rotation: 0,
-      showClearance: true,
+      width: def.width,
+      depth: def.depth,
+      showClearance: false,
     });
     setTool('select');
   };
