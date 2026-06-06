@@ -45,6 +45,30 @@ interface ImagePlacement {
   height: number;
 }
 
+let cachedLogoDataUrl: string | null = null;
+
+async function loadLogoDataUrl(): Promise<string | null> {
+  if (cachedLogoDataUrl) return cachedLogoDataUrl;
+
+  try {
+    const res = await fetch('/its-my-plan.png', { cache: 'force-cache' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read logo image'));
+      reader.readAsDataURL(blob);
+    });
+
+    cachedLogoDataUrl = dataUrl;
+    return dataUrl;
+  } catch {
+    return null;
+  }
+}
+
 /** Fit image into box preserving aspect ratio */
 function fitImageInBox(
   imgWidth: number,
@@ -71,14 +95,14 @@ function fitImageInBox(
   };
 }
 
-function drawPDFDecorations(
+async function drawPDFDecorations(
   doc: jsPDF,
   title: string,
   subtitle: string,
   plan: RoomPlan,
   docWidth: number,
   docHeight: number
-): number {
+): Promise<number> {
   const meta = getMetadata(plan);
 
   // White print-friendly page
@@ -93,12 +117,24 @@ function drawPDFDecorations(
   doc.setTextColor(30, 41, 59);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('its my plan', 15, 20);
+  doc.text('its my plan', 25, 20);
 
-  doc.setFillColor(59, 130, 246);
-  doc.rect(15, 22, 4, 4, 'F');
-  doc.setFillColor(249, 115, 22);
-  doc.rect(20, 22, 4, 4, 'F');
+  const logoDataUrl = await loadLogoDataUrl();
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, 'PNG', 15, 13.5, 8, 8);
+    } catch {
+      doc.setFillColor(59, 130, 246);
+      doc.rect(15, 22, 4, 4, 'F');
+      doc.setFillColor(249, 115, 22);
+      doc.rect(20, 22, 4, 4, 'F');
+    }
+  } else {
+    doc.setFillColor(59, 130, 246);
+    doc.rect(15, 22, 4, 4, 'F');
+    doc.setFillColor(249, 115, 22);
+    doc.rect(20, 22, 4, 4, 'F');
+  }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -110,20 +146,8 @@ function drawPDFDecorations(
   doc.setLineWidth(0.3);
   doc.line(15, 28, docWidth - 15, 28);
 
-  // Footer zone — fixed height so metadata never overlaps branding
-  const FOOTER_HEIGHT = 34;
-  const footerTop = docHeight - FOOTER_HEIGHT;
+  // Footer zone — dynamic height so metadata never overlaps branding
   const metaLineHeight = 4.5;
-  const metaStartY = footerTop + 5;
-  const brandDividerY = docHeight - 12;
-  const brandTextY = docHeight - 7;
-
-  doc.setDrawColor(200, 200, 200);
-  doc.line(15, footerTop, docWidth - 15, footerTop);
-
-  doc.setFontSize(8);
-  doc.setTextColor(51, 65, 85);
-
   const leftRows = [
     `Job: ${meta.jobNumber || '—'}`,
     ...(meta.clientName ? [`Client: ${meta.clientName}`] : []),
@@ -137,6 +161,19 @@ function drawPDFDecorations(
     `Plan: ${plan.name}`,
     `Exported: ${new Date().toLocaleString('en-GB')}`,
   ];
+
+  const rowCount = Math.max(leftRows.length, rightRows.length);
+  const FOOTER_HEIGHT = Math.max(40, 9 + rowCount * metaLineHeight + 12);
+  const footerTop = docHeight - FOOTER_HEIGHT;
+  const metaStartY = footerTop + 5;
+  const brandDividerY = metaStartY + rowCount * metaLineHeight + 2;
+  const brandTextY = docHeight - 7;
+
+  doc.setDrawColor(200, 200, 200);
+  doc.line(15, footerTop, docWidth - 15, footerTop);
+
+  doc.setFontSize(8);
+  doc.setTextColor(51, 65, 85);
 
   leftRows.forEach((row, i) => {
     doc.text(row, 15, metaStartY + i * metaLineHeight);
@@ -229,7 +266,7 @@ export async function export2DPDF(plan: RoomPlan, svgSelector: string): Promise<
     const docHeight = doc.internal.pageSize.getHeight();
     const meta = getMetadata(plan);
 
-    const drawingBottom = drawPDFDecorations(
+    const drawingBottom = await drawPDFDecorations(
       doc,
       `Project: ${plan.name}`,
       `2D Blueprint — Scale ${meta.scale || DEFAULT_PRINT_SCALE}`,
@@ -286,7 +323,7 @@ export async function export3DPDF(plan: RoomPlan, canvas3dSelector: string): Pro
     const docWidth = doc.internal.pageSize.getWidth();
     const docHeight = doc.internal.pageSize.getHeight();
 
-    const drawingBottom = drawPDFDecorations(
+    const drawingBottom = await drawPDFDecorations(
       doc,
       `Project: ${plan.name}`,
       '3D Dollhouse View',
@@ -349,21 +386,40 @@ function svgToPngDataUrl(
     try {
       const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
-      // Compute plan bounding box for fit-to-content export
+      // Compute plan bounding box for fit-to-content export, independent of current viewport pan/zoom.
       let exportWidth = 1600;
       let exportHeight = 1000;
+      let viewBoxX = 0;
+      let viewBoxY = 0;
+      let viewBoxW = exportWidth;
+      let viewBoxH = exportHeight;
 
       if (plan.walls.length > 0) {
         const bb = wallsBoundingBox(plan.walls);
-        const padding = 1000; // mm padding
-        const planW = (bb.width + padding * 2) * 0.1; // SCALE_2D
-        const planH = (bb.height + padding * 2) * 0.1;
-        exportWidth = Math.max(800, Math.min(2400, Math.round(planW)));
-        exportHeight = Math.max(600, Math.min(1600, Math.round(planH)));
+        const padding = 800; // mm padding
+        const minXmm = bb.minX - padding;
+        const minYmm = bb.minY - padding;
+        const wmm = bb.width + padding * 2;
+        const hmm = bb.height + padding * 2;
+
+        viewBoxX = minXmm * 0.1;
+        viewBoxY = minYmm * 0.1;
+        viewBoxW = Math.max(100, wmm * 0.1);
+        viewBoxH = Math.max(100, hmm * 0.1);
+
+        exportWidth = Math.max(900, Math.min(2600, Math.round(viewBoxW)));
+        exportHeight = Math.max(650, Math.min(1800, Math.round(viewBoxH)));
+      }
+
+      // Reset viewport transform so export always captures the whole plan rather than current pan/zoom state.
+      const transformedGroup = clonedSvg.querySelector('g[transform]');
+      if (transformedGroup) {
+        transformedGroup.removeAttribute('transform');
       }
 
       clonedSvg.setAttribute('width', String(exportWidth));
       clonedSvg.setAttribute('height', String(exportHeight));
+      clonedSvg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxW} ${viewBoxH}`);
 
       const style = document.createElement('style');
       style.textContent = `
