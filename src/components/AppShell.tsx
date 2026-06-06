@@ -125,12 +125,30 @@ export function AppShell() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => useUIStore.getState().toggleViewMode()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 transition-colors shadow-sm"
-          >
-            {viewMode === '2d' ? '2D Blueprint' : '3D Dollhouse'}
-          </button>
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+            <button
+              onClick={() => useUIStore.getState().setViewMode('2d')}
+              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                viewMode === '2d'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                  : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50 border border-transparent'
+              }`}
+              aria-pressed={viewMode === '2d'}
+            >
+              2D Blueprint
+            </button>
+            <button
+              onClick={() => useUIStore.getState().setViewMode('3d')}
+              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                viewMode === '3d'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                  : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50 border border-transparent'
+              }`}
+              aria-pressed={viewMode === '3d'}
+            >
+              3D Dollhouse
+            </button>
+          </div>
 
           {viewMode === '2d' && (
             <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">

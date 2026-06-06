@@ -99,10 +99,15 @@ export function getDoorOpenRotationY(opening: Opening): number {
   const openAngle = Math.PI / 3;
   const swingPositiveNormal = !opening.flipDirection;
   const hingeP1 = (opening.hingeSide ?? 'p1') === 'p1';
+  let rot = 0;
   if (hingeP1) {
-    return swingPositiveNormal ? openAngle : -openAngle;
+    rot = swingPositiveNormal ? openAngle : -openAngle;
+  } else {
+    rot = swingPositiveNormal ? -openAngle : openAngle;
   }
-  return swingPositiveNormal ? -openAngle : openAngle;
+  // 3D wall meshes are placed with an inverted Z mapping relative to 2D plan Y,
+  // so the door leaf rotation must be mirrored to match the 2D swing direction.
+  return -rot;
 }
 
 /**
@@ -112,7 +117,7 @@ export function getDoorArcPath(
   opening: Opening,
   wall: Wall
 ): string {
-  const { point, angle } = positionOnWall(wall, opening.distanceFromP1);
+  const { point } = positionOnWall(wall, opening.distanceFromP1);
   const halfWidth = opening.width / 2;
   const normal = wallNormal(wall);
   const dir = wallDirection(wall);
