@@ -37,3 +37,7 @@ export const INITIAL_VIEWPORT_SIZE = 10000; // mm — initial visible area
 export const ZOOM_MIN = 0.02;
 export const ZOOM_MAX = 2.0;
 export const ZOOM_STEP = 0.1;
+
+// === Print / PDF ===
+export const DEFAULT_PRINT_SCALE = '1:50'; // Standard architectural scale for 2D prints
+export const PDF_SCALE_MM_PER_PX = 5; // At 1:50 with SCALE_2D=0.1 → 10mm/px → 1:50 on paper
