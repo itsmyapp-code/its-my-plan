@@ -22,6 +22,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs = 15000): Promise<T> {
  * Save a plan to Firestore under /users/{uid}/plans/{planId}
  */
 export async function savePlanToFirestore(uid: string, plan: RoomPlan): Promise<void> {
+  console.log('🔧 savePlanToFirestore called', { uid, planId: plan.id });
   if (!isFirebaseConfigured()) return;
   const db = getFirebaseDb();
   if (!db) return;
