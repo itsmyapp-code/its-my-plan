@@ -109,90 +109,71 @@ async function drawPDFDecorations(
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, docWidth, docHeight, 'F');
 
+  // Page border
   doc.setDrawColor(180, 180, 180);
-  doc.setLineWidth(0.6);
+  doc.setLineWidth(0.5);
   doc.rect(8, 8, docWidth - 16, docHeight - 16, 'S');
 
-  // Header
-  doc.setTextColor(30, 41, 59);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('its my plan', 25, 20);
+  // NO HEADER. The entire upper canvas is available for content.
+  // Compact unified footer at the bottom
+  const FOOTER_HEIGHT = 16;
+  const footerTop = docHeight - 8 - FOOTER_HEIGHT; // 8mm margin from bottom
 
+  // Divider line above footer
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(12, footerTop, docWidth - 12, footerTop);
+
+  const brandTextY = docHeight - 13;
+
+  // Add brand logo if available
   const logoDataUrl = await loadLogoDataUrl();
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, 'PNG', 15, 13.5, 8, 8);
+      doc.addImage(logoDataUrl, 'PNG', 12, brandTextY - 3.5, 5, 5);
     } catch {
       doc.setFillColor(59, 130, 246);
-      doc.rect(15, 22, 4, 4, 'F');
+      doc.rect(12, brandTextY - 3, 2, 2, 'F');
       doc.setFillColor(249, 115, 22);
-      doc.rect(20, 22, 4, 4, 'F');
+      doc.rect(14.5, brandTextY - 3, 2, 2, 'F');
     }
   } else {
     doc.setFillColor(59, 130, 246);
-    doc.rect(15, 22, 4, 4, 'F');
+    doc.rect(12, brandTextY - 3, 2, 2, 'F');
     doc.setFillColor(249, 115, 22);
-    doc.rect(20, 22, 4, 4, 'F');
+    doc.rect(14.5, brandTextY - 3, 2, 2, 'F');
   }
 
+  // Brand Name
+  doc.setTextColor(30, 41, 59);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('its my plan', 19, brandTextY);
+
+  // Plan Details (Left-Middle side-by-side)
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setTextColor(71, 85, 105);
-  doc.text(title, 28, 23);
-  doc.text(subtitle, docWidth - 15, 20, { align: 'right' });
 
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.3);
-  doc.line(15, 28, docWidth - 15, 28);
+  const leftParts: string[] = [
+    `Plan: ${plan.name || 'Untitled Plan'}`,
+    meta.jobNumber ? `Job: ${meta.jobNumber}` : '',
+    meta.clientName ? `Client: ${meta.clientName}` : '',
+  ].filter(Boolean);
 
-  // Footer zone — dynamic height so metadata never overlaps branding
-  const metaLineHeight = 4.5;
-  const leftRows = [
-    `Job: ${meta.jobNumber || '—'}`,
-    ...(meta.clientName ? [`Client: ${meta.clientName}`] : []),
-    `Version: ${meta.version || '1.0'}`,
-    `Operator: ${meta.operator || '—'}`,
-    `Scale: ${meta.scale || DEFAULT_PRINT_SCALE}`,
+  doc.text(leftParts.join('  |  '), 42, brandTextY);
+
+  // Plan Metadata & Scale (Right side-by-side)
+  const rightParts: string[] = [
+    meta.operator ? `Operator: ${meta.operator}` : '',
+    meta.scale ? `Scale: ${meta.scale}` : `Scale: ${DEFAULT_PRINT_SCALE}`,
     `Date: ${new Date().toLocaleDateString('en-GB')}`,
-  ];
+  ].filter(Boolean);
 
-  const rightRows = [
-    `Plan: ${plan.name}`,
-    `Exported: ${new Date().toLocaleString('en-GB')}`,
-  ];
+  doc.text(rightParts.join('  |  '), docWidth - 12, brandTextY, { align: 'right' });
 
-  const rowCount = Math.max(leftRows.length, rightRows.length);
-  const FOOTER_HEIGHT = Math.max(40, 9 + rowCount * metaLineHeight + 12);
-  const footerTop = docHeight - FOOTER_HEIGHT;
-  const metaStartY = footerTop + 5;
-  const brandDividerY = metaStartY + rowCount * metaLineHeight + 2;
-  const brandTextY = docHeight - 7;
-
-  doc.setDrawColor(200, 200, 200);
-  doc.line(15, footerTop, docWidth - 15, footerTop);
-
-  doc.setFontSize(8);
-  doc.setTextColor(51, 65, 85);
-
-  leftRows.forEach((row, i) => {
-    doc.text(row, 15, metaStartY + i * metaLineHeight);
-  });
-
-  rightRows.forEach((row, i) => {
-    doc.text(row, docWidth - 15, metaStartY + i * metaLineHeight, { align: 'right' });
-  });
-
-  doc.setDrawColor(200, 200, 200);
-  doc.line(15, brandDividerY, docWidth - 15, brandDividerY);
-
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  doc.text('itsmyplan.co.uk  |  Design Tooling', 15, brandTextY);
-  doc.text('Client-Side Browser Plan — Confidential', docWidth - 15, brandTextY, { align: 'right' });
-
-  // Return Y coordinate where drawing area ends
-  return footerTop - 4;
+  // Return Y coordinate where drawing area ends (leaving a tiny padding before the line)
+  return footerTop - 2;
 }
 
 /**
@@ -214,6 +195,28 @@ export function exportToJSON(plan: RoomPlan): void {
   } catch (error) {
     console.error('Failed to export JSON:', error);
     alert('Failed to export JSON file.');
+  }
+}
+
+/**
+ * Export multiple plans to a single JSON master file.
+ */
+export function exportAllPlansToJSON(plans: RoomPlan[]): void {
+  try {
+    const filename = `itsmyplan_master_export_${new Date().toISOString().split('T')[0]}.json`;
+    const dataStr = JSON.stringify(plans, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Failed to export master JSON:', error);
+    alert('Failed to export master plans file.');
   }
 }
 
@@ -275,7 +278,7 @@ export async function export2DPDF(plan: RoomPlan, svgSelector: string): Promise<
       docHeight
     );
 
-    const imageBox = { x: 15, y: 32, w: docWidth - 30, h: drawingBottom - 32 };
+    const imageBox = { x: 12, y: 12, w: docWidth - 24, h: drawingBottom - 12 };
     const svgElement = document.querySelector(svgSelector) as SVGSVGElement | null;
 
     if (svgElement) {
@@ -283,16 +286,6 @@ export async function export2DPDF(plan: RoomPlan, svgSelector: string): Promise<
         const { dataUrl, width, height } = await svgToPngDataUrl(svgElement, plan);
         const placement = fitImageInBox(width, height, imageBox.x, imageBox.y, imageBox.w, imageBox.h);
         doc.addImage(dataUrl, 'PNG', placement.x, placement.y, placement.width, placement.height);
-
-        // Scale annotation below drawing
-        doc.setFontSize(9);
-        doc.setTextColor(71, 85, 105);
-        doc.text(
-          `Drawing scale: ${meta.scale || DEFAULT_PRINT_SCALE}  |  All dimensions in millimetres`,
-          docWidth / 2,
-          Math.min(drawingBottom - 2, imageBox.y + imageBox.h + 5),
-          { align: 'center' }
-        );
       } catch (err) {
         console.error('Failed to convert 2D SVG to image:', err);
         doc.setFontSize(14);
@@ -332,7 +325,7 @@ export async function export3DPDF(plan: RoomPlan, canvas3dSelector: string): Pro
       docHeight
     );
 
-    const imageBox = { x: 15, y: 32, w: docWidth - 30, h: drawingBottom - 32 };
+    const imageBox = { x: 12, y: 12, w: docWidth - 24, h: drawingBottom - 12 };
     const canvasElement = document.querySelector(canvas3dSelector);
     let canvas3d: HTMLCanvasElement | null = null;
 
@@ -423,6 +416,16 @@ function svgToPngDataUrl(
 
       const style = document.createElement('style');
       style.textContent = `
+        :root {
+          --canvas-bg: #ffffff;
+          --brand-blue: #2563eb;
+          --brand-orange: #ea580c;
+          --canvas-wall-selected: #2563eb;
+          --canvas-dimension-text: #475569;
+          --canvas-wall-stroke: #475569;
+          --canvas-wall-fill: #94a3b8;
+          --canvas-wall-fill-external: #64748b;
+        }
         svg { background: #ffffff !important; }
         text { fill: #334155 !important; font-family: sans-serif; }
         .grid-line { stroke: #e2e8f0; }

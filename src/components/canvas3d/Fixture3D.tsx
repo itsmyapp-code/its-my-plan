@@ -19,8 +19,8 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
   const def = getFixtureDefinition(fixture.type);
   if (!def) return null;
 
-  const width = def.width * SCALE_3D;
-  const depth = def.depth * SCALE_3D;
+  const width = (fixture.width ?? def.width) * SCALE_3D;
+  const depth = (fixture.depth ?? def.depth) * SCALE_3D;
   // Standard heights in meters: Bath: 0.6, WC: 0.8, Basin: 0.85, Kitchen: 0.9, Appliance Tower: 2.1, Bed: 0.5, Wardrobe: 2.0
   const height = useMemo(() => {
     if (def.category === 'bathroom') {
@@ -38,6 +38,14 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       if (def.id.includes('bed')) return 0.5;
       if (def.id.includes('wardrobe')) return 2.0;
     }
+    if (def.category === 'furniture') {
+      if (def.id.includes('chair')) return 0.9;
+      if (def.id.includes('coffee-table')) return 0.45;
+      if (def.id.includes('dressing-table')) return 0.78;
+      if (def.id.includes('bedside-table')) return 0.6;
+      return 0.75;
+    }
+    if (def.category === 'electrical' || def.category === 'plumbing') return 0.08;
     return 0.7;
   }, [def]);
 
@@ -83,6 +91,25 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
 
     // Shower
     if (def.id.includes('shower')) {
+      if (def.id.includes('quadrant')) {
+        return (
+          <group>
+            <mesh position={[0, 0.04 / 2, 0]} castShadow>
+              <cylinderGeometry args={[width / 2, width / 2, 0.04, 48, 1, false, Math.PI, Math.PI / 2]} />
+              <meshStandardMaterial color="#f1f5f9" roughness={0.1} />
+            </mesh>
+            <mesh position={[-width / 4, height / 2, 0]} castShadow>
+              <boxGeometry args={[0.02, height, depth]} />
+              <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} roughness={0.1} />
+            </mesh>
+            <mesh position={[0, height / 2, -depth / 4]} castShadow>
+              <boxGeometry args={[width, height, 0.02]} />
+              <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} roughness={0.1} />
+            </mesh>
+          </group>
+        );
+      }
+
       return (
         <group>
           {/* Tray */}
@@ -98,6 +125,26 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
           <mesh position={[0, height / 2, -depth / 2 + 0.01]} castShadow>
             <boxGeometry args={[width, height, 0.02]} />
             <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} roughness={0.1} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Electrical and plumbing symbols as low-profile markers
+    if (def.category === 'electrical' || def.category === 'plumbing') {
+      return (
+        <group>
+          <mesh position={[0, 0.02, 0]} castShadow>
+            <cylinderGeometry args={[Math.max(width, depth) * 0.42, Math.max(width, depth) * 0.42, 0.04, 24]} />
+            <meshStandardMaterial
+              color={new THREE.Color(def.color).offsetHSL(0, 0, -0.05)}
+              roughness={0.35}
+              metalness={0.1}
+            />
+          </mesh>
+          <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[Math.max(width, depth) * 0.26, Math.max(width, depth) * 0.35, 24]} />
+            <meshStandardMaterial color={def.color} emissive={def.color} emissiveIntensity={0.05} side={THREE.DoubleSide} />
           </mesh>
         </group>
       );

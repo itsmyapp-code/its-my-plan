@@ -4,11 +4,18 @@ import { useEffect } from 'react';
 import { useToolStore } from '@/store/useToolStore';
 import { usePlanStore } from '@/store/usePlanStore';
 import { useUIStore } from '@/store/useUIStore';
+import { clampOpeningPosition } from '@/utils/openingHelpers';
 
 export function useKeyboard() {
   const { isDrawing, cancelDrawing, setTool } = useToolStore();
   const { deleteSelected, undo, redo, canUndo, canRedo } = usePlanStore();
-  const { toggleFixturePalette, toggleTakeoffPanel, toggleClearanceZones } = useUIStore();
+  const {
+    toggleFixturePalette,
+    toggleTakeoffPanel,
+    toggleClearanceZones,
+    toggleElectricalLayer,
+    togglePlumbingLayer,
+  } = useUIStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -16,6 +23,57 @@ export function useKeyboard() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
       switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowDown':
+        case 'ArrowLeft':
+        case 'ArrowRight': {
+          const { selection, plan, updateFixture, updateOpening, updateWall } = usePlanStore.getState();
+          const shift = e.shiftKey;
+          const delta = shift ? 10 : 50;
+
+          if (selection.type === 'fixture' && selection.id) {
+            const fixture = plan.fixtures.find((f) => f.id === selection.id);
+            if (fixture) {
+              e.preventDefault();
+              let dx = 0;
+              let dy = 0;
+              if (e.key === 'ArrowLeft') dx = -delta;
+              if (e.key === 'ArrowRight') dx = delta;
+              if (e.key === 'ArrowUp') dy = -delta;
+              if (e.key === 'ArrowDown') dy = delta;
+              updateFixture(selection.id, { x: fixture.x + dx, y: fixture.y + dy });
+            }
+          } else if (selection.type === 'opening' && selection.id) {
+            const opening = plan.openings.find((o) => o.id === selection.id);
+            const wall = plan.walls.find((w) => w.id === opening?.wallId);
+            if (opening && wall) {
+              e.preventDefault();
+              let change = 0;
+              if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') change = -delta;
+              if (e.key === 'ArrowRight' || e.key === 'ArrowDown') change = delta;
+              const newDist = opening.distanceFromP1 + change;
+              const clamped = clampOpeningPosition(wall, { ...opening, distanceFromP1: newDist });
+              updateOpening(selection.id, { distanceFromP1: clamped });
+            }
+          } else if (selection.type === 'wall' && selection.id) {
+            const wall = plan.walls.find((w) => w.id === selection.id);
+            if (wall) {
+              e.preventDefault();
+              let dx = 0;
+              let dy = 0;
+              if (e.key === 'ArrowLeft') dx = -delta;
+              if (e.key === 'ArrowRight') dx = delta;
+              if (e.key === 'ArrowUp') dy = -delta;
+              if (e.key === 'ArrowDown') dy = delta;
+              updateWall(selection.id, {
+                p1: { x: wall.p1.x + dx, y: wall.p1.y + dy },
+                p2: { x: wall.p2.x + dx, y: wall.p2.y + dy },
+              });
+            }
+          }
+          break;
+        }
+
         case 'Escape':
           if (isDrawing) cancelDrawing();
           break;
@@ -70,6 +128,16 @@ export function useKeyboard() {
           if (!e.ctrlKey && !e.metaKey) toggleClearanceZones();
           break;
 
+        case 'e':
+        case 'E':
+          if (!e.ctrlKey && !e.metaKey) toggleElectricalLayer();
+          break;
+
+        case 'p':
+        case 'P':
+          if (!e.ctrlKey && !e.metaKey) togglePlumbingLayer();
+          break;
+
         case 'z':
         case 'Z':
           if ((e.ctrlKey || e.metaKey) && !e.shiftKey && canUndo) {
@@ -93,5 +161,19 @@ export function useKeyboard() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDrawing, cancelDrawing, deleteSelected, setTool, undo, redo, canUndo, canRedo, toggleFixturePalette, toggleTakeoffPanel, toggleClearanceZones]);
+  }, [
+    isDrawing,
+    cancelDrawing,
+    deleteSelected,
+    setTool,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    toggleFixturePalette,
+    toggleTakeoffPanel,
+    toggleClearanceZones,
+    toggleElectricalLayer,
+    togglePlumbingLayer,
+  ]);
 }

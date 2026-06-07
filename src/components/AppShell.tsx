@@ -11,6 +11,7 @@ import { FixturePalette } from '@/components/ui/FixturePalette';
 import { TakeoffPanel } from '@/components/ui/TakeoffPanel';
 import { HamburgerMenu } from '@/components/HamburgerMenu';
 import { PlanSettingsModal } from '@/components/PlanSettingsModal';
+import { PlanManagerModal } from '@/components/PlanManagerModal';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useUIStore } from '@/store/useUIStore';
@@ -47,12 +48,14 @@ export function AppShell() {
   const togglePropertiesPanel = useUIStore((s) => s.togglePropertiesPanel);
   const plan = usePlanStore((s) => s.plan);
   const setPlan = usePlanStore((s) => s.setPlan);
+  const renamePlan = usePlanStore((s) => s.renamePlan);
   const selection = usePlanStore((s) => s.selection);
   const { user } = useAuth();
 
   const [isPrinting2D, setIsPrinting2D] = useState(false);
   const [isPrinting3D, setIsPrinting3D] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,6 +98,7 @@ export function AppShell() {
             onPrint2D={handlePrint2D}
             onPrint3D={handlePrint3D}
             onOpenSettings={() => setShowSettings(true)}
+            onOpenPlans={() => setShowPlans(true)}
             isPrinting2D={isPrinting2D}
             isPrinting3D={isPrinting3D}
           />
@@ -111,9 +115,13 @@ export function AppShell() {
             its my plan
           </h1>
           <span className="text-xs text-slate-400 hidden md:inline">|</span>
-          <span className="text-xs text-slate-600 truncate max-w-48 hidden md:inline">
-            {plan.name}
-          </span>
+          <input
+            type="text"
+            className="text-xs text-slate-700 font-medium bg-transparent hover:bg-slate-200/50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-slate-300 rounded-md px-2 py-0.5 focus:outline-none transition-all max-w-48 hidden md:inline focus:ring-1 focus:ring-blue-500/20"
+            value={plan.name}
+            onChange={(e) => renamePlan(e.target.value)}
+            title="Click to rename plan"
+          />
           {plan.metadata?.jobNumber && (
             <>
               <span className="text-xs text-slate-300 hidden lg:inline">|</span>
@@ -202,6 +210,10 @@ export function AppShell() {
 
       {showSettings && (
         <PlanSettingsModal onClose={() => setShowSettings(false)} />
+      )}
+
+      {showPlans && (
+        <PlanManagerModal onClose={() => setShowPlans(false)} />
       )}
     </div>
   );

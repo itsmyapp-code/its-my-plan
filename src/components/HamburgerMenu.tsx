@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Menu, X, Upload, FileJson, FileText,
-  RefreshCw, Settings, LogIn, LogOut, HelpCircle,
+  RefreshCw, Settings, LogIn, LogOut, HelpCircle, FolderOpen,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useUIStore } from '@/store/useUIStore';
@@ -15,6 +15,7 @@ interface HamburgerMenuProps {
   onPrint2D: () => void;
   onPrint3D: () => void;
   onOpenSettings: () => void;
+  onOpenPlans: () => void;
   isPrinting2D: boolean;
   isPrinting3D: boolean;
 }
@@ -25,6 +26,7 @@ export function HamburgerMenu({
   onPrint2D,
   onPrint3D,
   onOpenSettings,
+  onOpenPlans,
   isPrinting2D,
   isPrinting3D,
 }: HamburgerMenuProps) {
@@ -63,8 +65,13 @@ export function HamburgerMenu({
       {open && (
         <div className="absolute top-full left-0 mt-2 w-56 glass-panel rounded-xl border border-slate-200 shadow-lg z-50 py-2 animate-fade-in">
           <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            File
+            File / Plans
           </div>
+
+          <button className={`${menuItemClass} mx-1`} onClick={() => { onOpenPlans(); close(); }}>
+            <FolderOpen size={14} className="text-blue-500" />
+            My Saved Plans
+          </button>
 
           <label className={`${menuItemClass} cursor-pointer mx-1`} onClick={close}>
             <Upload size={14} />

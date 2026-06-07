@@ -34,6 +34,8 @@ export interface Fixture {
   x: number; // Center coordinate X in mm
   y: number; // Center coordinate Y in mm
   rotation: number; // 0, 90, 180, 270 degrees
+  width?: number; // Optional instance override in mm
+  depth?: number; // Optional instance override in mm
   showClearance: boolean; // Dynamic tracking property visibility toggle
 }
 
@@ -61,6 +63,8 @@ export interface AppViewSettings {
   showDimensions: boolean;
   showClearanceZones: boolean;
   showServiceLayers: boolean;
+  showElectricalLayer: boolean;
+  showPlumbingLayer: boolean;
   activeMode: '2d' | '3d' | 'takeoff';
 }
 

@@ -18,6 +18,8 @@ import {
   Eye,
   EyeOff,
   ArrowLeftRight,
+  Zap,
+  Droplets,
 } from 'lucide-react';
 import { useToolStore } from '@/store/useToolStore';
 import { usePlanStore } from '@/store/usePlanStore';
@@ -41,6 +43,7 @@ export function Toolbar() {
     showFixturePalette, toggleFixturePalette,
     showTakeoffPanel, toggleTakeoffPanel,
     viewSettings, toggleClearanceZones,
+    toggleElectricalLayer, togglePlumbingLayer,
   } = useUIStore();
 
   const tools: ToolButton[] = [
@@ -61,7 +64,7 @@ export function Toolbar() {
   ];
 
   return (
-    <div className="glass-panel absolute left-3 top-1/2 -translate-y-1/2 z-30 rounded-2xl p-1.5 flex flex-col gap-1 animate-fade-in">
+    <div className="glass-panel absolute left-3 top-1/2 -translate-y-1/2 z-30 rounded-2xl p-1.5 grid grid-cols-2 sm:flex sm:flex-col gap-1 animate-fade-in max-h-[85vh] overflow-y-auto sm:overflow-visible">
       {/* Tool modes */}
       {tools.map((tool) => (
         <button
@@ -76,7 +79,7 @@ export function Toolbar() {
       ))}
 
       {/* Divider */}
-      <div className="w-6 h-px bg-slate-200 mx-auto my-1" />
+      <div className="col-span-2 w-full h-px bg-slate-200/60 my-0.5 sm:col-auto sm:w-6 sm:h-px sm:bg-slate-200 sm:mx-auto sm:my-1" />
 
       {/* Fixture palette toggle */}
       <button
@@ -108,8 +111,28 @@ export function Toolbar() {
         {viewSettings.showClearanceZones ? <Eye size={18} /> : <EyeOff size={18} />}
       </button>
 
+      {/* Electrical layer toggle */}
+      <button
+        className={`tool-btn ${viewSettings.showElectricalLayer ? 'active' : ''}`}
+        onClick={toggleElectricalLayer}
+        title="Toggle Electrical Layer (E)"
+        aria-label="Toggle Electrical Layer"
+      >
+        <Zap size={18} />
+      </button>
+
+      {/* Plumbing layer toggle */}
+      <button
+        className={`tool-btn ${viewSettings.showPlumbingLayer ? 'active' : ''}`}
+        onClick={togglePlumbingLayer}
+        title="Toggle Plumbing Layer (P)"
+        aria-label="Toggle Plumbing Layer"
+      >
+        <Droplets size={18} />
+      </button>
+
       {/* Divider */}
-      <div className="w-6 h-px bg-slate-200 mx-auto my-1" />
+      <div className="col-span-2 w-full h-px bg-slate-200/60 my-0.5 sm:col-auto sm:w-6 sm:h-px sm:bg-slate-200 sm:mx-auto sm:my-1" />
 
       {/* Action buttons */}
       {actions.map((action) => {
@@ -132,7 +155,7 @@ export function Toolbar() {
       })}
 
       {/* Divider */}
-      <div className="w-6 h-px bg-slate-200 mx-auto my-1" />
+      <div className="col-span-2 w-full h-px bg-slate-200/60 my-0.5 sm:col-auto sm:w-6 sm:h-px sm:bg-slate-200 sm:mx-auto sm:my-1" />
 
       {/* 3D / 2D toggle */}
       <button
@@ -147,7 +170,7 @@ export function Toolbar() {
       {/* Delete */}
       {selection.id && (
         <button
-          className="tool-btn text-red-400 hover:text-red-300 hover:bg-red-900/30"
+          className="tool-btn text-red-500 hover:text-red-600 hover:bg-red-50 col-span-2 sm:col-span-1"
           onClick={deleteSelected}
           title="Delete Selected (Del)"
           aria-label="Delete Selected"

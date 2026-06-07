@@ -15,6 +15,8 @@ interface UIState {
   toggleDimensions: () => void;
   toggleClearanceZones: () => void;
   toggleServiceLayers: () => void;
+  toggleElectricalLayer: () => void;
+  togglePlumbingLayer: () => void;
   setActiveMode: (mode: AppViewSettings['activeMode']) => void;
 
   // Panels
@@ -71,6 +73,8 @@ export const useUIStore = create<UIState>((set) => ({
     showDimensions: true,
     showClearanceZones: false,
     showServiceLayers: false,
+    showElectricalLayer: true,
+    showPlumbingLayer: true,
     activeMode: '2d',
   },
 
@@ -88,8 +92,39 @@ export const useUIStore = create<UIState>((set) => ({
 
   toggleServiceLayers: () => {
     set((state) => ({
-      viewSettings: { ...state.viewSettings, showServiceLayers: !state.viewSettings.showServiceLayers },
+      viewSettings: {
+        ...state.viewSettings,
+        showServiceLayers: !state.viewSettings.showServiceLayers,
+        showElectricalLayer: !state.viewSettings.showServiceLayers,
+        showPlumbingLayer: !state.viewSettings.showServiceLayers,
+      },
     }));
+  },
+
+  toggleElectricalLayer: () => {
+    set((state) => {
+      const next = !state.viewSettings.showElectricalLayer;
+      return {
+        viewSettings: {
+          ...state.viewSettings,
+          showElectricalLayer: next,
+          showServiceLayers: next || state.viewSettings.showPlumbingLayer,
+        },
+      };
+    });
+  },
+
+  togglePlumbingLayer: () => {
+    set((state) => {
+      const next = !state.viewSettings.showPlumbingLayer;
+      return {
+        viewSettings: {
+          ...state.viewSettings,
+          showPlumbingLayer: next,
+          showServiceLayers: state.viewSettings.showElectricalLayer || next,
+        },
+      };
+    });
   },
 
   setActiveMode: (mode) => {

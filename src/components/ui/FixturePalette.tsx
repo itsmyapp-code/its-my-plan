@@ -51,7 +51,7 @@ export function FixturePalette({ onClose }: FixturePaletteProps) {
   };
 
   return (
-    <div className="glass-panel absolute right-3 top-14 z-40 w-64 rounded-2xl overflow-hidden animate-fade-in">
+    <div className="absolute right-3 top-14 z-50 w-64 rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">

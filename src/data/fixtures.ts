@@ -5,8 +5,20 @@
 export interface FixtureDefinition {
   id: string;
   label: string;
-  category: 'bathroom' | 'kitchen' | 'bedroom';
-  iconType: 'bath' | 'wc' | 'basin' | 'shower' | 'kitchen' | 'bed' | 'wardrobe' | 'generic';
+  category: 'bathroom' | 'kitchen' | 'bedroom' | 'furniture' | 'electrical' | 'plumbing';
+  iconType:
+    | 'bath'
+    | 'wc'
+    | 'basin'
+    | 'shower'
+    | 'kitchen'
+    | 'bed'
+    | 'wardrobe'
+    | 'table'
+    | 'chair'
+    | 'electric'
+    | 'plumbing'
+    | 'generic';
   width: number;    // mm (along X when rotation=0)
   depth: number;    // mm (along Y when rotation=0)
   color: string;    // Fill colour for 2D/3D rendering
@@ -188,6 +200,158 @@ export const FIXTURE_LIBRARY: FixtureDefinition[] = [
     depth: 500,
     color: '#fbbf24',
     clearance: { front: 500, sides: 0, description: '500mm standard sliding corridor access clearance' },
+  },
+
+  // ═══════════════════════════════════════
+  // FURNITURE
+  // ═══════════════════════════════════════
+  {
+    id: 'uk-furniture-bedside-table',
+    label: 'Bedside Table',
+    category: 'furniture',
+    iconType: 'table',
+    width: 450,
+    depth: 450,
+    color: '#f59e0b',
+    clearance: { front: 450, sides: 100, description: 'Allow pull-out and circulation around compact bedside table' },
+  },
+  {
+    id: 'uk-furniture-chair',
+    label: 'Chair',
+    category: 'furniture',
+    iconType: 'chair',
+    width: 500,
+    depth: 500,
+    color: '#10b981',
+    clearance: { front: 450, sides: 150, description: '450mm pull-back space recommended for seating movement' },
+  },
+  {
+    id: 'uk-furniture-dressing-table',
+    label: 'Dressing Table',
+    category: 'furniture',
+    iconType: 'table',
+    width: 1000,
+    depth: 450,
+    color: '#f59e0b',
+    clearance: { front: 700, sides: 150, description: '700mm seated access zone in front of dressing table' },
+  },
+  {
+    id: 'uk-furniture-coffee-table',
+    label: 'Coffee Table',
+    category: 'furniture',
+    iconType: 'table',
+    width: 1000,
+    depth: 600,
+    color: '#f59e0b',
+    clearance: { front: 400, sides: 300, description: 'Living space circulation zone around central coffee table' },
+  },
+
+  // ═══════════════════════════════════════
+  // ELECTRICAL (UK symbols)
+  // ═══════════════════════════════════════
+  {
+    id: 'uk-elec-single-socket',
+    label: 'Single Socket (13A)',
+    category: 'electrical',
+    iconType: 'electric',
+    width: 86,
+    depth: 86,
+    color: '#f97316',
+    clearance: { front: 0, sides: 0, description: 'Wall-mounted service symbol' },
+  },
+  {
+    id: 'uk-elec-double-socket',
+    label: 'Double Socket (13A)',
+    category: 'electrical',
+    iconType: 'electric',
+    width: 146,
+    depth: 86,
+    color: '#f97316',
+    clearance: { front: 0, sides: 0, description: 'Wall-mounted service symbol' },
+  },
+  {
+    id: 'uk-elec-light-switch-1g',
+    label: 'Light Switch 1G',
+    category: 'electrical',
+    iconType: 'electric',
+    width: 86,
+    depth: 86,
+    color: '#f97316',
+    clearance: { front: 0, sides: 0, description: 'Wall-mounted control symbol' },
+  },
+  {
+    id: 'uk-elec-ceiling-light',
+    label: 'Ceiling Light Point',
+    category: 'electrical',
+    iconType: 'electric',
+    width: 120,
+    depth: 120,
+    color: '#f97316',
+    clearance: { front: 0, sides: 0, description: 'Ceiling lighting symbol in reflected plan' },
+  },
+  {
+    id: 'uk-elec-extractor-fan',
+    label: 'Extractor Fan',
+    category: 'electrical',
+    iconType: 'electric',
+    width: 150,
+    depth: 150,
+    color: '#f97316',
+    clearance: { front: 0, sides: 0, description: 'Mechanical extraction point symbol' },
+  },
+
+  // ═══════════════════════════════════════
+  // PLUMBING (UK symbols)
+  // ═══════════════════════════════════════
+  {
+    id: 'uk-plumb-hot-water-outlet',
+    label: 'Hot Water Outlet',
+    category: 'plumbing',
+    iconType: 'plumbing',
+    width: 80,
+    depth: 80,
+    color: '#0ea5e9',
+    clearance: { front: 0, sides: 0, description: 'Service connection point symbol' },
+  },
+  {
+    id: 'uk-plumb-cold-water-outlet',
+    label: 'Cold Water Outlet',
+    category: 'plumbing',
+    iconType: 'plumbing',
+    width: 80,
+    depth: 80,
+    color: '#0ea5e9',
+    clearance: { front: 0, sides: 0, description: 'Service connection point symbol' },
+  },
+  {
+    id: 'uk-plumb-waste-outlet',
+    label: 'Waste Outlet',
+    category: 'plumbing',
+    iconType: 'plumbing',
+    width: 80,
+    depth: 80,
+    color: '#0ea5e9',
+    clearance: { front: 0, sides: 0, description: 'Waste connection point symbol' },
+  },
+  {
+    id: 'uk-plumb-soil-stack-110',
+    label: 'Soil Stack 110mm',
+    category: 'plumbing',
+    iconType: 'plumbing',
+    width: 110,
+    depth: 110,
+    color: '#0ea5e9',
+    clearance: { front: 0, sides: 0, description: 'Vertical soil stack symbol' },
+  },
+  {
+    id: 'uk-plumb-radiator-1000',
+    label: 'Radiator 1000mm',
+    category: 'plumbing',
+    iconType: 'plumbing',
+    width: 1000,
+    depth: 120,
+    color: '#0ea5e9',
+    clearance: { front: 150, sides: 0, description: 'Keep clear from obstructions for airflow and maintenance' },
   },
 ];
 

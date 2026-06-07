@@ -1,7 +1,7 @@
 'use client';
 
 import { usePlanStore } from '@/store/usePlanStore';
-import { wallLength, wallAngleDeg, formatMM, wallDirection } from '@/utils/geometry';
+import { wallLength, wallAngleDeg, wallDirection } from '@/utils/geometry';
 import { clampOpeningPosition, hasOverlappingOpenings } from '@/utils/openingHelpers';
 import { getFixtureDefinition } from '@/data/fixtures';
 import { X, RotateCw, FlipHorizontal2, Trash2, Copy } from 'lucide-react';
@@ -38,6 +38,17 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
     const len = wallLength(wall);
     const angle = wallAngleDeg(wall);
 
+    const clampOpeningsForWall = (updatedP2: { x: number; y: number }) => {
+      const updatedWall = { ...wall, p2: updatedP2 };
+      const wallOpenings = plan.openings.filter((o) => o.wallId === wall.id);
+      for (const op of wallOpenings) {
+        const clampedDist = clampOpeningPosition(updatedWall, op);
+        if (clampedDist !== op.distanceFromP1) {
+          updateOpening(op.id, { distanceFromP1: clampedDist });
+        }
+      }
+    };
+
     return (
       <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
@@ -62,16 +73,8 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                   y: wall.p1.y + dir.y * newLen,
                 };
                 updateWall(wall.id, { p2 });
-                
-                // Clamp child openings
-                const wallOpenings = plan.openings.filter((o) => o.wallId === wall.id);
-                for (const op of wallOpenings) {
-                  const updatedWall = { ...wall, p2 };
-                  const clampedDist = clampOpeningPosition(updatedWall, op);
-                  if (clampedDist !== op.distanceFromP1) {
-                    updateOpening(op.id, { distanceFromP1: clampedDist });
-                  }
-                }
+
+                clampOpeningsForWall(p2);
               }}
               step={100}
               min={100}
@@ -80,7 +83,28 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
           <div>
             <label className="prop-label">Angle</label>
-            <div className="text-sm text-slate-900 font-medium">{angle.toFixed(1)}°</div>
+            <input
+              type="number"
+              className="prop-input"
+              value={Number.isFinite(angle) ? Number(angle.toFixed(1)) : 0}
+              onChange={(e) => {
+                const parsed = Number(e.target.value);
+                if (!Number.isFinite(parsed)) return;
+
+                const normalized = ((parsed % 360) + 360) % 360;
+                const radians = (normalized * Math.PI) / 180;
+                const p2 = {
+                  x: wall.p1.x + Math.cos(radians) * len,
+                  y: wall.p1.y + Math.sin(radians) * len,
+                };
+
+                updateWall(wall.id, { p2 });
+                clampOpeningsForWall(p2);
+              }}
+              step={1}
+              min={-360}
+              max={360}
+            />
           </div>
 
           <div>
@@ -111,7 +135,17 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
           <div>
             <label className="prop-label">Thickness</label>
-            <div className="text-sm text-slate-900 font-medium">{formatMM(wall.thickness)}</div>
+            <input
+              type="number"
+              className="prop-input"
+              value={Math.round(wall.thickness)}
+              onChange={(e) => {
+                const val = Number(e.target.value) || wall.thickness;
+                updateWall(wall.id, { thickness: Math.max(50, val) });
+              }}
+              step={10}
+              min={50}
+            />
           </div>
 
           <div>
@@ -179,24 +213,28 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
 
         <div className="p-4 space-y-3">
           <div>
-            <label className="prop-label">Width</label>
+            <label className="prop-label">Width (mm)</label>
             <input
               type="number"
               className="prop-input"
               value={opening.width}
               onChange={(e) => {
-                const val = Number(e.target.value) || opening.width;
+                const val = Number(e.target.value);
+                if (!Number.isFinite(val)) return;
                 if (wall) {
                   const maxW = wallLength(wall);
-                  const newW = Math.min(maxW, Math.max(300, val));
+                  // Allow free typing (e.g. 9 -> 90 -> 900) without snapping back to 300.
+                  // Keep a tiny lower bound only to avoid degenerate geometry while typing.
+                  const newW = Math.min(maxW, Math.max(1, val));
                   const currentEdgeDist = opening.distanceFromP1 - opening.width / 2;
                   const newCenterDist = currentEdgeDist + newW / 2;
                   const clampedCenterDist = clampOpeningPosition(wall, { width: newW, distanceFromP1: newCenterDist });
                   updateOpening(opening.id, { width: newW, distanceFromP1: clampedCenterDist });
                 } else {
-                  updateOpening(opening.id, { width: val });
+                  updateOpening(opening.id, { width: Math.max(1, val) });
                 }
               }}
+              onFocus={(e) => e.currentTarget.select()}
               step={10}
               min={300}
               max={3000}
@@ -225,19 +263,23 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
             />
           </div>
 
+          <div>
+            <label className="prop-label">Height (mm)</label>
+            <input
+              type="number"
+              className="prop-input"
+              value={opening.height}
+              onChange={(e) => {
+                const val = Number(e.target.value) || opening.height;
+                updateOpening(opening.id, { height: Math.max(300, val) });
+              }}
+              step={50}
+              min={300}
+            />
+          </div>
+
           {opening.type === 'window' && (
             <>
-              <div>
-                <label className="prop-label">Height</label>
-                <input
-                  type="number"
-                  className="prop-input"
-                  value={opening.height}
-                  onChange={(e) => updateOpening(opening.id, { height: Number(e.target.value) || opening.height })}
-                  step={50}
-                  min={300}
-                />
-              </div>
               <div>
                 <label className="prop-label">Sill Height</label>
                 <input
@@ -376,9 +418,40 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
             <div className="text-sm text-slate-900 font-medium">{def?.label ?? fixture.type}</div>
             {def && (
               <div className="text-[10px] text-slate-500 mt-0.5">
-                {def.width}×{def.depth} mm
+                Default {def.width}×{def.depth} mm
               </div>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="prop-label">Width</label>
+              <input
+                type="number"
+                className="prop-input"
+                value={Math.round(fixture.width ?? def?.width ?? 0)}
+                onChange={(e) => {
+                  const fallback = fixture.width ?? def?.width ?? 300;
+                  updateFixture(fixture.id, { width: Math.max(50, Number(e.target.value) || fallback) });
+                }}
+                step={10}
+                min={50}
+              />
+            </div>
+            <div>
+              <label className="prop-label">Depth</label>
+              <input
+                type="number"
+                className="prop-input"
+                value={Math.round(fixture.depth ?? def?.depth ?? 0)}
+                onChange={(e) => {
+                  const fallback = fixture.depth ?? def?.depth ?? 300;
+                  updateFixture(fixture.id, { depth: Math.max(50, Number(e.target.value) || fallback) });
+                }}
+                step={10}
+                min={50}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -439,6 +512,8 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                 x: fixture.x + offset,
                 y: fixture.y + offset,
                 rotation: fixture.rotation,
+                width: fixture.width,
+                depth: fixture.depth,
                 showClearance: fixture.showClearance,
               });
             }}
