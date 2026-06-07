@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { PolicyFooter } from '@/components/PolicyFooter';
 
 export function LoginPage() {
   const { signIn, signUp, resetPassword, firebaseEnabled, user, loading } = useAuth();
@@ -116,8 +117,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-full flex items-center justify-center bg-slate-100 p-6">
-      <div className="glass-panel max-w-md w-full rounded-2xl overflow-hidden shadow-lg">
+    <div className="min-h-full flex flex-col items-center justify-center bg-slate-100 p-6">
+      <div className="glass-panel max-w-md w-full rounded-2xl overflow-hidden shadow-lg mb-8">
         <div className="px-8 pt-8 pb-4 text-center border-b border-slate-200">
           <Image src="/its-my-plan.png" alt="its my plan" width={56} height={56} className="mx-auto rounded-xl mb-3" priority />
           <h1 className="text-xl font-semibold text-slate-900">its my plan</h1>
@@ -201,10 +202,10 @@ export function LoginPage() {
               </>
             )}
           </div>
-
-
         </form>
       </div>
+      <PolicyFooter />
     </div>
   );
 }
+

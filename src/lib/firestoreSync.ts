@@ -6,7 +6,7 @@ import { getFirebaseDb, isFirebaseConfigured } from '@/lib/firebase';
  * Helper to wrap promises in a timeout so they fail fast instead of hanging
  * indefinitely when blocked by Brave Shields or privacy ad-blockers.
  */
-function withTimeout<T>(promise: Promise<T>, timeoutMs = 6000): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, timeoutMs = 15000): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
