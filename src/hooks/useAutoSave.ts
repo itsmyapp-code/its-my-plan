@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { usePlanStore } from '@/store/usePlanStore';
-import { savePlan, loadActivePlan, migratePlan } from '@/utils/storage';
+import { savePlan, loadActivePlan, migratePlan, loadAllPlans } from '@/utils/storage';
 import { savePlanToFirestore } from '@/lib/firestoreSync';
 import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -24,7 +24,20 @@ export function useAutoSave() {
     if (!auth) return;
 
     const unsub = onAuthStateChanged(auth, (user) => {
-      uidRef.current = user?.uid ?? null;
+      if (user) {
+        uidRef.current = user.uid;
+        // Auto-sync local plans to Firestore on login
+        try {
+          const localPlans = loadAllPlans();
+          localPlans.forEach((p) => {
+            savePlanToFirestore(user.uid, p).catch(console.warn);
+          });
+        } catch (e) {
+          console.warn('Failed to sync local plans to Firestore:', e);
+        }
+      } else {
+        uidRef.current = null;
+      }
     });
     return unsub;
   }, []);
