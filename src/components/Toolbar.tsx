@@ -64,7 +64,7 @@ export function Toolbar() {
   ];
 
   return (
-    <div className="glass-panel absolute left-3 top-1/2 -translate-y-1/2 z-30 rounded-2xl p-1.5 grid grid-cols-2 sm:flex sm:flex-col gap-1 animate-fade-in max-h-[85vh] overflow-y-auto sm:overflow-visible">
+    <div className="glass-panel absolute left-3 top-1/2 -translate-y-1/2 z-30 rounded-2xl p-1 sm:p-1.5 grid grid-cols-2 sm:flex sm:flex-col gap-0.5 sm:gap-1 animate-fade-in max-h-[85vh] overflow-y-auto sm:overflow-visible">
       {/* Tool modes */}
       {tools.map((tool) => (
         <button

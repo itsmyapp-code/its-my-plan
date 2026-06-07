@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Menu, X, Upload, FileJson, FileText,
   RefreshCw, Settings, LogIn, LogOut, HelpCircle, FolderOpen,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useUIStore } from '@/store/useUIStore';
+import { usePlanStore } from '@/store/usePlanStore';
 
 interface HamburgerMenuProps {
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -35,6 +37,7 @@ export function HamburgerMenu({
   const { user, logout, firebaseEnabled } = useAuth();
   const viewMode = useUIStore((s) => s.viewMode);
   const toggleViewMode = useUIStore((s) => s.toggleViewMode);
+  const router = useRouter();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -136,7 +139,13 @@ export function HamburgerMenu({
           {user ? (
             <button
               className={`${menuItemClass} mx-1 text-red-600 hover:text-red-700 hover:bg-red-50`}
-              onClick={async () => { await logout(); close(); }}
+              onClick={async () => {
+                await logout();
+                usePlanStore.getState().resetPlan();
+                localStorage.removeItem('itsmyplan_active_plan');
+                close();
+                router.push('/login');
+              }}
             >
               <LogOut size={14} />
               Logout ({user.email?.split('@')[0]})

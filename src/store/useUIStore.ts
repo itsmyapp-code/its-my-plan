@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ViewportState, AppViewSettings } from '@/types';
 import { ZOOM_MIN, ZOOM_MAX } from '@/constants';
+import { usePlanStore } from '@/store/usePlanStore';
 
 interface UIState {
   // Viewport
@@ -140,7 +141,13 @@ export const useUIStore = create<UIState>((set) => ({
 
   showFixturePalette: false,
   toggleFixturePalette: () => {
-    set((state) => ({ showFixturePalette: !state.showFixturePalette }));
+    set((state) => {
+      const next = !state.showFixturePalette;
+      if (next) {
+        usePlanStore.getState().clearSelection();
+      }
+      return { showFixturePalette: next };
+    });
   },
 
   showTakeoffPanel: false,

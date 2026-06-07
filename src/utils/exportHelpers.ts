@@ -116,7 +116,7 @@ async function drawPDFDecorations(
 
   // NO HEADER. The entire upper canvas is available for content.
   // Compact unified footer at the bottom
-  const FOOTER_HEIGHT = 16;
+  const FOOTER_HEIGHT = 10;
   const footerTop = docHeight - 8 - FOOTER_HEIGHT; // 8mm margin from bottom
 
   // Divider line above footer

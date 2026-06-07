@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Wall, Opening, Fixture, RoomPlan, SelectionState, PlanMetadata } from '@/types';
 import { generateId } from '@/utils/idGenerator';
 import { WALL_THICKNESS_INTERNAL, WALL_THICKNESS_EXTERNAL, DEFAULT_PRINT_SCALE } from '@/constants';
+import { useUIStore } from '@/store/useUIStore';
 
 // ── Undo/Redo History ──────────────────────────────────────────────
 
@@ -334,6 +335,9 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   // === Selection ===
   select: (type, id) => {
     set({ selection: { type, id } });
+    if (type !== null) {
+      useUIStore.setState({ showFixturePalette: false });
+    }
   },
 
   clearSelection: () => {

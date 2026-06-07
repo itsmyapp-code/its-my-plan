@@ -42,10 +42,19 @@ export function Canvas2D() {
   const [measureStart, setMeasureStart] = useState<Point | null>(null);
   const [measureEnd, setMeasureEnd] = useState<Point | null>(null);
 
+  // Clear measurements when switching away from measure tool
+  useEffect(() => {
+    if (activeTool !== 'measure') {
+      setMeasureStart(null);
+      setMeasureEnd(null);
+    }
+  }, [activeTool]);
+
   // Track keyboard shortcuts
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
         return;
       }
       if (e.key === 'Shift') setShiftHeld(true);
@@ -155,6 +164,11 @@ export function Canvas2D() {
       }
 
       if (e.button !== 0) return;
+
+      // Clear focus from inputs when clicking canvas so keyboard controls trigger immediately
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
 
       const mm = screenToMM(e.clientX, e.clientY);
 

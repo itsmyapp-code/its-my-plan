@@ -19,6 +19,9 @@ import { usePlanStore } from '@/store/usePlanStore';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { exportToJSON, importFromJSON, export2DPDF, export3DPDF } from '@/utils/exportHelpers';
 import { DEFAULT_PRINT_SCALE } from '@/constants';
+import { savePlan } from '@/utils/storage';
+import { savePlanToFirestore } from '@/lib/firestoreSync';
+import { Save, FolderOpen, Check, Loader2 } from 'lucide-react';
 
 const Canvas3D = dynamic(
   () => import('@/components/canvas3d/Canvas3D').then((mod) => ({ default: mod.Canvas3D })),
@@ -50,12 +53,29 @@ export function AppShell() {
   const setPlan = usePlanStore((s) => s.setPlan);
   const renamePlan = usePlanStore((s) => s.renamePlan);
   const selection = usePlanStore((s) => s.selection);
-  const { user } = useAuth();
+  const { user, firebaseEnabled } = useAuth();
 
   const [isPrinting2D, setIsPrinting2D] = useState(false);
   const [isPrinting3D, setIsPrinting3D] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    try {
+      savePlan(plan);
+      if (user) {
+        await savePlanToFirestore(user.uid, plan);
+      }
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to manually save:', err);
+      alert('Failed to save plan: ' + (err as Error).message);
+      setSaveStatus('idle');
+    }
+  };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,14 +134,38 @@ export function AppShell() {
           <h1 className="text-sm font-semibold text-slate-800 tracking-tight hidden sm:block">
             its my plan
           </h1>
-          <span className="text-xs text-slate-400 hidden md:inline">|</span>
-          <input
-            type="text"
-            className="text-xs text-slate-700 font-medium bg-transparent hover:bg-slate-200/50 focus:bg-white border border-transparent hover:border-slate-200 focus:border-slate-300 rounded-md px-2 py-0.5 focus:outline-none transition-all max-w-48 hidden md:inline focus:ring-1 focus:ring-blue-500/20"
-            value={plan.name}
-            onChange={(e) => renamePlan(e.target.value)}
-            title="Click to rename plan"
-          />
+          <span className="text-xs text-slate-400 hidden sm:inline">|</span>
+          <div className="flex items-center gap-1 border border-slate-200 bg-white/70 hover:bg-white focus-within:bg-white focus-within:border-blue-400 p-0.5 rounded-lg shadow-sm transition-all focus-within:ring-1 focus-within:ring-blue-200">
+            <input
+              type="text"
+              className="text-xs text-slate-700 font-semibold bg-transparent border-none outline-none px-2 py-0.5 max-w-36 sm:max-w-48"
+              value={plan.name}
+              onChange={(e) => renamePlan(e.target.value)}
+              title="Click to rename plan"
+              placeholder="Plan Name"
+            />
+            <button
+              onClick={handleSave}
+              className="flex items-center justify-center p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+              title="Save Plan"
+              disabled={saveStatus === 'saving'}
+            >
+              {saveStatus === 'saved' ? (
+                <Check size={13} className="text-emerald-500" />
+              ) : saveStatus === 'saving' ? (
+                <Loader2 size={13} className="animate-spin text-blue-500" />
+              ) : (
+                <Save size={13} />
+              )}
+            </button>
+            <button
+              onClick={() => setShowPlans(true)}
+              className="flex items-center justify-center p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors border-l border-slate-100 pl-1.5"
+              title="Load / Manage Plans"
+            >
+              <FolderOpen size={13} />
+            </button>
+          </div>
           {plan.metadata?.jobNumber && (
             <>
               <span className="text-xs text-slate-300 hidden lg:inline">|</span>
@@ -164,10 +208,18 @@ export function AppShell() {
             </span>
           )}
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-medium text-emerald-700 uppercase tracking-wider">
-              {user ? 'Cloud Sync' : 'Zero Server'}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
+            user
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              : firebaseEnabled
+              ? 'bg-blue-50 border-blue-200 text-blue-700'
+              : 'bg-slate-50 border-slate-200 text-slate-500'
+          }`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              user ? 'bg-emerald-500 animate-pulse' : firebaseEnabled ? 'bg-blue-500' : 'bg-slate-400'
+            }`} />
+            <span className="text-[10px] font-medium uppercase tracking-wider">
+              {user ? 'Cloud Sync' : firebaseEnabled ? 'Firebase Guest' : 'Zero Server'}
             </span>
           </div>
         </div>
