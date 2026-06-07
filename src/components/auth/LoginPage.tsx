@@ -202,11 +202,7 @@ export function LoginPage() {
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-200 text-center">
-            <Link href="/" className="text-xs text-slate-500 hover:text-slate-800 transition-colors">
-              Continue without signing in (Zero Server mode)
-            </Link>
-          </div>
+
         </form>
       </div>
     </div>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Canvas2D } from '@/components/canvas2d/Canvas2D';
 import { Toolbar } from '@/components/Toolbar';
 import { PropertiesPanel } from '@/components/PropertiesPanel';
@@ -53,7 +54,14 @@ export function AppShell() {
   const setPlan = usePlanStore((s) => s.setPlan);
   const renamePlan = usePlanStore((s) => s.renamePlan);
   const selection = usePlanStore((s) => s.selection);
-  const { user, firebaseEnabled } = useAuth();
+  const { user, loading, firebaseEnabled } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
 
   const [isPrinting2D, setIsPrinting2D] = useState(false);
   const [isPrinting3D, setIsPrinting3D] = useState(false);
@@ -76,6 +84,17 @@ export function AppShell() {
       setSaveStatus('idle');
     }
   };
+
+  if (loading || !user) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-slate-100">
+        <div className="flex flex-col items-center gap-3 text-slate-500">
+          <div className="w-8 h-8 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin" />
+          <span className="text-xs font-medium">Checking authorization…</span>
+        </div>
+      </div>
+    );
+  }
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
