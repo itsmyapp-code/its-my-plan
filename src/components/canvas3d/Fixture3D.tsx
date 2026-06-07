@@ -23,6 +23,10 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
   const depth = (fixture.depth ?? def.depth) * SCALE_3D;
   // Standard heights in meters: Bath: 0.6, WC: 0.8, Basin: 0.85, Kitchen: 0.9, Appliance Tower: 2.1, Bed: 0.5, Wardrobe: 2.0
   const height = useMemo(() => {
+    if (def.iconType === 'radiator' || def.id.includes('radiator')) return 0.6;
+    if (def.iconType === 'tv') return 0.7;
+    if (def.iconType === 'appliance') return 0.85;
+
     if (def.category === 'bathroom') {
       if (def.id.includes('bath')) return 0.6;
       if (def.id.includes('wc')) return 0.8;
@@ -426,6 +430,128 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
           <mesh position={[width / 2 - legRadius - 0.01, legHeight / 2, depth / 2 - legRadius - 0.01]} castShadow>
             <cylinderGeometry args={[legRadius, legRadius * 0.7, legHeight, 8]} />
             <meshStandardMaterial color={legColor} roughness={0.5} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Kitchen Worktop
+    if (def.id === 'uk-kitchen-worktop') {
+      return (
+        <group>
+          {/* Cabinet Base */}
+          <mesh position={[0, (height - 0.04) / 2, 0]} castShadow>
+            <boxGeometry args={[width, height - 0.04, depth]} />
+            <meshStandardMaterial color="#f1f5f9" roughness={0.5} />
+          </mesh>
+          {/* Wooden Countertop */}
+          <mesh position={[0, height - 0.04 / 2, 0]} castShadow>
+            <boxGeometry args={[width + 0.01, 0.04, depth + 0.01]} />
+            <meshStandardMaterial color="#7c2d12" roughness={0.4} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Radiator (wall panel radiator with fins)
+    if (def.iconType === 'radiator') {
+      const finCount = 10;
+      const finWidth = width / finCount;
+      const listFins = Array.from({ length: finCount });
+      return (
+        <group>
+          {/* Main radiator panel body */}
+          <mesh position={[0, height / 2, 0]} castShadow>
+            <boxGeometry args={[width, height, depth * 0.4]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.2} />
+          </mesh>
+          {/* Radiator fins/ridges */}
+          {listFins.map((_, idx) => {
+            const xPos = -width / 2 + finWidth * (idx + 0.5);
+            return (
+              <mesh key={idx} position={[xPos, height / 2, depth * 0.2 + 0.005]} castShadow>
+                <boxGeometry args={[finWidth * 0.6, height * 0.95, 0.01]} />
+                <meshStandardMaterial color="#f1f5f9" roughness={0.2} />
+              </mesh>
+            );
+          })}
+        </group>
+      );
+    }
+
+    // TV (Wall-mounted or stand console)
+    if (def.iconType === 'tv') {
+      const isWall = def.id.includes('wall');
+      const tvHeight = 0.7;
+      const tvThickness = 0.04;
+      const zPos = isWall ? -depth / 2 + tvThickness / 2 : 0;
+      const yPos = isWall ? 1.4 : tvHeight / 2 + 0.5; // Wall mount vs stand console height
+      
+      return (
+        <group>
+          {/* Stand console (if not wall-mounted) */}
+          {!isWall && (
+            <group>
+              {/* Stand cabinet */}
+              <mesh position={[0, 0.5 / 2, 0]} castShadow>
+                <boxGeometry args={[width + 0.1, 0.5, depth]} />
+                <meshStandardMaterial color="#1e293b" roughness={0.6} />
+              </mesh>
+              {/* TV neck & base support */}
+              <mesh position={[0, 0.5 + 0.05, 0]} castShadow>
+                <cylinderGeometry args={[0.02, 0.02, 0.1, 8]} />
+                <meshStandardMaterial color="#020617" metalness={0.9} roughness={0.1} />
+              </mesh>
+              <mesh position={[0, 0.5 + 0.1, 0]} castShadow>
+                <boxGeometry args={[0.3, 0.02, 0.2]} />
+                <meshStandardMaterial color="#020617" metalness={0.9} roughness={0.1} />
+              </mesh>
+            </group>
+          )}
+          
+          {/* TV Screen */}
+          <mesh position={[0, yPos, zPos]} castShadow>
+            <boxGeometry args={[width, tvHeight, tvThickness]} />
+            <meshStandardMaterial color="#090d16" roughness={0.1} metalness={0.8} />
+          </mesh>
+          {/* TV Screen Inner panel (glass highlight) */}
+          <mesh position={[0, yPos, zPos + tvThickness / 2 + 0.001]}>
+            <boxGeometry args={[width * 0.96, tvHeight * 0.94, 0.002]} />
+            <meshStandardMaterial color="#020617" roughness={0.05} metalness={0.9} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Appliance (Washing Machine / Tumble Dryer)
+    if (def.iconType === 'appliance') {
+      const isDryer = def.id.includes('dryer');
+      return (
+        <group>
+          {/* Main Appliance Cabinet */}
+          <mesh position={[0, height / 2, 0]} castShadow>
+            <boxGeometry args={[width, height, depth]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.2} />
+          </mesh>
+          {/* Top Control Panel Drawer */}
+          <mesh position={[0, height - 0.12 / 2 - 0.01, depth / 2 + 0.005]} castShadow>
+            <boxGeometry args={[width * 0.96, 0.12, 0.01]} />
+            <meshStandardMaterial color="#e2e8f0" roughness={0.3} />
+          </mesh>
+          {/* Dial button */}
+          <mesh position={[-width * 0.25, height - 0.07, depth / 2 + 0.015]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.02, 12]} />
+            <meshStandardMaterial color="#64748b" metalness={0.7} roughness={0.2} />
+          </mesh>
+          {/* Round Glass Door */}
+          <mesh position={[0, height * 0.42, depth / 2 + 0.015]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+            <cylinderGeometry args={[width * 0.25, width * 0.25, 0.03, 32, 1]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.1} />
+          </mesh>
+          {/* Glass window panel inside door */}
+          <mesh position={[0, height * 0.42, depth / 2 + 0.026]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[width * 0.18, width * 0.18, 0.01, 24]} />
+            <meshStandardMaterial color={isDryer ? "#cbd5e1" : "#38bdf8"} transparent opacity={isDryer ? 0.3 : 0.4} roughness={0.05} />
           </mesh>
         </group>
       );

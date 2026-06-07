@@ -313,15 +313,6 @@ export function FixtureIcon({ def, width, depth, color }: FixtureIconProps) {
           {def.id.includes('soil-stack') && (
             <line x1={0} y1={-d * 0.26} x2={0} y2={d * 0.26} stroke={color} strokeWidth={1.1} />
           )}
-          {def.id.includes('radiator') && (
-            <>
-              <line x1={-w * 0.3} y1={-d * 0.15} x2={-w * 0.3} y2={d * 0.15} stroke={color} strokeWidth={0.6} />
-              <line x1={-w * 0.15} y1={-d * 0.15} x2={-w * 0.15} y2={d * 0.15} stroke={color} strokeWidth={0.6} />
-              <line x1={0} y1={-d * 0.15} x2={0} y2={d * 0.15} stroke={color} strokeWidth={0.6} />
-              <line x1={w * 0.15} y1={-d * 0.15} x2={w * 0.15} y2={d * 0.15} stroke={color} strokeWidth={0.6} />
-              <line x1={w * 0.3} y1={-d * 0.15} x2={w * 0.3} y2={d * 0.15} stroke={color} strokeWidth={0.6} />
-            </>
-          )}
         </g>
       );
 
@@ -392,6 +383,65 @@ export function FixtureIcon({ def, width, depth, color }: FixtureIconProps) {
               <ellipse cx={-w * 0.2} cy={0} rx={w * 0.12} ry={d * 0.15} fill="none" stroke={color} strokeWidth={0.5} />
               <ellipse cx={w * 0.2} cy={0} rx={w * 0.12} ry={d * 0.15} fill="none" stroke={color} strokeWidth={0.5} />
             </>
+          )}
+        </g>
+      );
+    }
+
+    case 'radiator':
+      return (
+        <g>
+          {/* Main radiator panel body */}
+          <rect x={-w / 2 + 1} y={-d / 2 + 1} width={w - 2} height={d - 2} rx={1} fill="none" stroke={color} strokeWidth={0.8} />
+          {/* Ridges / fins */}
+          <line x1={-w * 0.4} y1={-d / 2 + 2} x2={-w * 0.4} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={-w * 0.3} y1={-d / 2 + 2} x2={-w * 0.3} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={-w * 0.2} y1={-d / 2 + 2} x2={-w * 0.2} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={-w * 0.1} y1={-d / 2 + 2} x2={-w * 0.1} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={0} y1={-d / 2 + 2} x2={0} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={w * 0.1} y1={-d / 2 + 2} x2={w * 0.1} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={w * 0.2} y1={-d / 2 + 2} x2={w * 0.2} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={w * 0.3} y1={-d / 2 + 2} x2={w * 0.3} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+          <line x1={w * 0.4} y1={-d / 2 + 2} x2={w * 0.4} y2={d / 2 - 2} stroke={color} strokeWidth={0.5} />
+        </g>
+      );
+
+    case 'tv': {
+      const isWall = def.id.includes('wall');
+      return (
+        <g>
+          {/* TV Screen */}
+          <rect x={-w / 2} y={-d * 0.15} width={w} height={d * 0.3} rx={1} fill={color} fillOpacity={0.2} stroke={color} strokeWidth={0.8} />
+          {/* TV Stand (if on stand) */}
+          {!isWall && (
+            <>
+              {/* Stand neck */}
+              <line x1={0} y1={0} x2={0} y2={d * 0.3} stroke={color} strokeWidth={1} />
+              {/* Stand base */}
+              <ellipse cx={0} cy={d * 0.3} rx={w * 0.15} ry={d * 0.1} fill="none" stroke={color} strokeWidth={0.8} />
+            </>
+          )}
+        </g>
+      );
+    }
+
+    case 'appliance': {
+      const isDryer = def.id.includes('dryer');
+      return (
+        <g>
+          {/* Outer body */}
+          <rect x={-w / 2 + 1} y={-d / 2 + 1} width={w - 2} height={d - 2} rx={2} fill="none" stroke={color} strokeWidth={0.8} />
+          {/* Control panel bar */}
+          <line x1={-w / 2 + 1} y1={-d * 0.3} x2={w / 2 - 1} y2={-d * 0.3} stroke={color} strokeWidth={0.6} />
+          {/* Dial detail */}
+          <circle cx={-w * 0.25} cy={-d * 0.4} r={2} fill="none" stroke={color} strokeWidth={0.5} />
+          {/* Front round door/window */}
+          <circle cx={0} cy={d * 0.1} r={w * 0.25} fill="none" stroke={color} strokeWidth={0.7} />
+          {/* Inner circle (or dryer lines) */}
+          {isDryer ? (
+            <line x1={-w * 0.12} y1={d * 0.1} x2={w * 0.12} y2={d * 0.1} stroke={color} strokeWidth={0.6} />
+          ) : (
+            <circle cx={0} cy={d * 0.1} r={w * 0.15} fill="none" stroke={color} strokeWidth={0.4} strokeDasharray="2,1" />
           )}
         </g>
       );

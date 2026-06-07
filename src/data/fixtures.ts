@@ -18,6 +18,9 @@ export interface FixtureDefinition {
     | 'chair'
     | 'electric'
     | 'plumbing'
+    | 'radiator'
+    | 'tv'
+    | 'appliance'
     | 'generic';
   width: number;    // mm (along X when rotation=0)
   depth: number;    // mm (along Y when rotation=0)
@@ -217,6 +220,36 @@ export const FIXTURE_LIBRARY: FixtureDefinition[] = [
     color: '#ddd6fe',
     clearance: { front: 450, sides: 0, description: '450mm head height clearance zone' },
   },
+  {
+    id: 'uk-kitchen-washing-machine',
+    label: 'Washing Machine',
+    category: 'kitchen',
+    iconType: 'appliance',
+    width: 600,
+    depth: 600,
+    color: '#94a3b8',
+    clearance: { front: 600, sides: 0, description: '600mm front clearance for door swing and loading' },
+  },
+  {
+    id: 'uk-kitchen-tumble-dryer',
+    label: 'Tumble Dryer',
+    category: 'kitchen',
+    iconType: 'appliance',
+    width: 600,
+    depth: 600,
+    color: '#94a3b8',
+    clearance: { front: 600, sides: 0, description: '600mm front clearance for door swing and loading' },
+  },
+  {
+    id: 'uk-kitchen-worktop',
+    label: 'Kitchen Worktop',
+    category: 'kitchen',
+    iconType: 'kitchen',
+    width: 1200,
+    depth: 600,
+    color: '#7c2d12',
+    clearance: { front: 600, sides: 0, description: '600mm operational space in front of worktop' },
+  },
 
   // ═══════════════════════════════════════
   // BEDROOM
@@ -375,6 +408,26 @@ export const FIXTURE_LIBRARY: FixtureDefinition[] = [
     color: '#f43f5e',
     clearance: { front: 500, sides: 200, description: 'Circulation space around a standing adult' },
   },
+  {
+    id: 'uk-furniture-tv-wall',
+    label: 'Wall-Mounted TV',
+    category: 'furniture',
+    iconType: 'tv',
+    width: 1200,
+    depth: 120,
+    color: '#475569',
+    clearance: { front: 500, sides: 100, description: 'Maintain clearance for wall visibility' },
+  },
+  {
+    id: 'uk-furniture-tv-stand',
+    label: 'TV on Stand',
+    category: 'furniture',
+    iconType: 'tv',
+    width: 1200,
+    depth: 400,
+    color: '#475569',
+    clearance: { front: 500, sides: 100, description: 'Maintain space around console' },
+  },
 
   // ═══════════════════════════════════════
   // ELECTRICAL (UK symbols)
@@ -477,8 +530,18 @@ export const FIXTURE_LIBRARY: FixtureDefinition[] = [
     id: 'uk-plumb-radiator-1000',
     label: 'Radiator 1000mm',
     category: 'plumbing',
-    iconType: 'plumbing',
+    iconType: 'radiator',
     width: 1000,
+    depth: 120,
+    color: '#0ea5e9',
+    clearance: { front: 150, sides: 0, description: 'Keep clear from obstructions for airflow and maintenance' },
+  },
+  {
+    id: 'uk-plumb-radiator-600',
+    label: 'Radiator 600mm',
+    category: 'plumbing',
+    iconType: 'radiator',
+    width: 600,
     depth: 120,
     color: '#0ea5e9',
     clearance: { front: 150, sides: 0, description: 'Keep clear from obstructions for airflow and maintenance' },
