@@ -98,14 +98,14 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       if (def.id.includes('quadrant')) {
         return (
           <group>
-            {/* Tray (Base) - positioned at the back-left corner, radius = full width */}
-            <mesh position={[-width / 2, 0.04 / 2, -depth / 2]} castShadow>
-              <cylinderGeometry args={[width, width, 0.04, 32, 1, false, Math.PI * 1.5, Math.PI / 2]} />
+            {/* Tray (Base) - positioned at the back-left corner, scaled to width and depth to support rectangular sizing */}
+            <mesh position={[-width / 2, 0.04 / 2, -depth / 2]} scale={[width, 1, depth]} castShadow>
+              <cylinderGeometry args={[1, 1, 0.04, 32, 1, false, Math.PI * 1.5, Math.PI / 2]} />
               <meshStandardMaterial color="#f1f5f9" roughness={0.1} />
             </mesh>
-            {/* Curved Glass Screen - matching the tray's arc */}
-            <mesh position={[-width / 2, height / 2, -depth / 2]} castShadow>
-              <cylinderGeometry args={[width, width, height, 32, 1, true, Math.PI * 1.5, Math.PI / 2]} />
+            {/* Curved Glass Screen - matching the tray's arc and scaled */}
+            <mesh position={[-width / 2, height / 2, -depth / 2]} scale={[width, height, depth]} castShadow>
+              <cylinderGeometry args={[1, 1, 1, 32, 1, true, Math.PI * 1.5, Math.PI / 2]} />
               <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} roughness={0.1} side={THREE.DoubleSide} />
             </mesh>
             {/* Corner Post (Back-Left) */}
