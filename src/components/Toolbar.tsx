@@ -20,6 +20,7 @@ import {
   ArrowLeftRight,
   Zap,
   Droplets,
+  Calculator,
 } from 'lucide-react';
 import { useToolStore } from '@/store/useToolStore';
 import { usePlanStore } from '@/store/usePlanStore';
@@ -44,6 +45,7 @@ export function Toolbar() {
     showTakeoffPanel, toggleTakeoffPanel,
     viewSettings, toggleClearanceZones,
     toggleElectricalLayer, togglePlumbingLayer,
+    toggleDimensions,
   } = useUIStore();
 
   const tools: ToolButton[] = [
@@ -91,12 +93,22 @@ export function Toolbar() {
         <Armchair size={18} />
       </button>
 
-      {/* Takeoff panel toggle */}
+      {/* Takeoff panel toggle (now using Calculator icon) */}
       <button
         className={`tool-btn ${showTakeoffPanel ? 'active' : ''}`}
         onClick={toggleTakeoffPanel}
         title="Material Takeoff (T)"
         aria-label="Material Takeoff"
+      >
+        <Calculator size={18} />
+      </button>
+
+      {/* Dimensions & Measurements layer toggle */}
+      <button
+        className={`tool-btn ${viewSettings.showDimensions ? 'active' : ''}`}
+        onClick={toggleDimensions}
+        title="Toggle Dimensions & Measurements (L)"
+        aria-label="Toggle Dimensions & Measurements"
       >
         <Ruler size={18} />
       </button>

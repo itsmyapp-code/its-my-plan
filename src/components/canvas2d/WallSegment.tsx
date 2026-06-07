@@ -7,6 +7,7 @@ import { wallCorners, wallLength, wallMidpoint, wallAngleDeg, formatMM, wallDire
 import { CEILING_HEIGHT } from '@/constants';
 import { usePlanStore } from '@/store/usePlanStore';
 import { useToolStore } from '@/store/useToolStore';
+import { useUIStore } from '@/store/useUIStore';
 import { DimensionLabel } from './DimensionLabel';
 
 interface WallSegmentProps {
@@ -18,6 +19,7 @@ export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
   const selection = usePlanStore((s) => s.selection);
   const select = usePlanStore((s) => s.select);
   const activeTool = useToolStore((s) => s.activeTool);
+  const showDimensions = useUIStore((s) => s.viewSettings.showDimensions);
 
   const isSelected = selection.type === 'wall' && selection.id === wall.id;
   const openings = usePlanStore((s) => s.plan.openings);
@@ -132,6 +134,8 @@ export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
         fill={
           isSelected
             ? 'var(--canvas-wall-selected)'
+            : wall.color
+            ? wall.color
             : wall.wallType === 'external'
             ? 'var(--canvas-wall-fill-external)'
             : 'var(--canvas-wall-fill)'
@@ -241,34 +245,36 @@ export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
       )}
 
       {/* Dimension chain labels (if there are openings) */}
-      {dimensionChains.length > 0 ? (
-        <>
-          {/* Outer Overall Wall Length (offset further out) */}
+      {showDimensions && (
+        dimensionChains.length > 0 ? (
+          <>
+            {/* Outer Overall Wall Length (offset further out) */}
+            <DimensionLabel
+              midpoint={{ x: mid.x * SCALE_2D, y: mid.y * SCALE_2D }}
+              angle={angle}
+              length={len}
+              offsetDistance={26}
+            />
+            {/* Inner Chained Dimensions */}
+            {dimensionChains.map((chain, i) => (
+              <DimensionLabel
+                key={i}
+                midpoint={{ x: chain.midpoint.x * SCALE_2D, y: chain.midpoint.y * SCALE_2D }}
+                angle={angle}
+                length={chain.length}
+                offsetDistance={12}
+              />
+            ))}
+          </>
+        ) : (
+          /* Single Wall Dimension Label */
           <DimensionLabel
             midpoint={{ x: mid.x * SCALE_2D, y: mid.y * SCALE_2D }}
             angle={angle}
             length={len}
-            offsetDistance={26}
+            offsetDistance={12}
           />
-          {/* Inner Chained Dimensions */}
-          {dimensionChains.map((chain, i) => (
-            <DimensionLabel
-              key={i}
-              midpoint={{ x: chain.midpoint.x * SCALE_2D, y: chain.midpoint.y * SCALE_2D }}
-              angle={angle}
-              length={chain.length}
-              offsetDistance={12}
-            />
-          ))}
-        </>
-      ) : (
-        /* Single Wall Dimension Label */
-        <DimensionLabel
-          midpoint={{ x: mid.x * SCALE_2D, y: mid.y * SCALE_2D }}
-          angle={angle}
-          length={len}
-          offsetDistance={12}
-        />
+        )
       )}
     </g>
   );

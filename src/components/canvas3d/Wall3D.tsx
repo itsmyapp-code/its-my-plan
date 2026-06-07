@@ -79,8 +79,9 @@ export function Wall3D({ wall }: Wall3DProps) {
 
   const color = useMemo(() => {
     if (isSelected) return '#3b82f6';
+    if (wall.color) return wall.color;
     return wall.wallType === 'external' ? '#64748b' : '#94a3b8';
-  }, [isSelected, wall.wallType]);
+  }, [isSelected, wall.wallType, wall.color]);
 
   return (
     <group

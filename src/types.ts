@@ -14,6 +14,7 @@ export interface Wall {
   height?: number; // Uniform height in mm (defaults to CEILING_HEIGHT)
   heightP1?: number; // Height at p1 end in mm (for sloped/raked walls)
   heightP2?: number; // Height at p2 end in mm (for sloped/raked walls)
+  color?: string; // Custom color override
 }
 
 export interface Opening {
@@ -47,12 +48,19 @@ export interface PlanMetadata {
   clientName?: string;
 }
 
+export interface Measurement {
+  id: string;
+  p1: Point;
+  p2: Point;
+}
+
 export interface RoomPlan {
   id: string;
   name: string;
   walls: Wall[];
   openings: Opening[];
   fixtures: Fixture[];
+  measurements?: Measurement[];
   metadata: PlanMetadata;
   createdAt: number;
   updatedAt: number;
@@ -73,7 +81,7 @@ export type ToolMode = 'select' | 'draw-wall' | 'place-opening-door' | 'place-op
 
 // Selection state
 export interface SelectionState {
-  type: 'wall' | 'opening' | 'fixture' | null;
+  type: 'wall' | 'opening' | 'fixture' | 'measurement' | null;
   id: string | null;
 }
 

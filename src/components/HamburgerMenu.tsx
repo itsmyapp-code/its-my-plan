@@ -148,7 +148,7 @@ export function HamburgerMenu({
               }}
             >
               <LogOut size={14} />
-              Logout ({user.email?.split('@')[0]})
+              Logout ({user.displayName || user.email})
             </button>
           ) : (
             <Link href="/login" className={`${menuItemClass} mx-1`} onClick={close}>

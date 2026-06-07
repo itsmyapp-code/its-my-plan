@@ -32,7 +32,7 @@ interface FixturePaletteProps {
 export function FixturePalette({ onClose }: FixturePaletteProps) {
   const addFixture = usePlanStore((s) => s.addFixture);
   const setTool = useToolStore((s) => s.setTool);
-  const [expandedCat, setExpandedCat] = useState<string>('bathroom');
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
 
   const categories = Array.from(new Set(FIXTURE_LIBRARY.map((f) => f.category)));
 
@@ -70,12 +70,12 @@ export function FixturePalette({ onClose }: FixturePaletteProps) {
       <div className="max-h-96 overflow-y-auto p-2">
         {categories.map((cat) => {
           const items = FIXTURE_LIBRARY.filter((f) => f.category === cat);
-          const isExpanded = expandedCat === cat;
+          const isExpanded = Boolean(expandedCats[cat]);
 
           return (
             <div key={cat} className="mb-1">
               <button
-                onClick={() => setExpandedCat(isExpanded ? '' : cat)}
+                onClick={() => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }))}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               >
                 {CATEGORY_ICONS[cat]}

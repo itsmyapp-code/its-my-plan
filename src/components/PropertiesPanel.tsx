@@ -1,7 +1,7 @@
 'use client';
 
 import { usePlanStore } from '@/store/usePlanStore';
-import { wallLength, wallAngleDeg, wallDirection } from '@/utils/geometry';
+import { wallLength, wallAngleDeg, wallDirection, distance } from '@/utils/geometry';
 import { clampOpeningPosition, hasOverlappingOpenings } from '@/utils/openingHelpers';
 import { getFixtureDefinition } from '@/data/fixtures';
 import { X, RotateCw, FlipHorizontal2, Trash2, Copy } from 'lucide-react';
@@ -179,6 +179,36 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
             {(wall.heightP1 ?? wall.height ?? 2400) !== (wall.heightP2 ?? wall.height ?? 2400) && (
               <p className="text-[10px] text-orange-400 mt-1">Sloped / raked wall — visible in 3D view</p>
             )}
+          </div>
+
+          <div>
+            <label className="prop-label">Wall Color</label>
+            <div className="grid grid-cols-4 gap-2 mt-1.5">
+              {[
+                { name: 'Default', hex: '' },
+                { name: 'White', hex: '#f8fafc' },
+                { name: 'Slate', hex: '#64748b' },
+                { name: 'Charcoal', hex: '#334155' },
+                { name: 'Sage', hex: '#8ea893' },
+                { name: 'Beige', hex: '#d7ccc8' },
+                { name: 'Blue', hex: '#7ea1c4' },
+                { name: 'Terracotta', hex: '#cc7a6f' },
+              ].map((c) => (
+                <button
+                  key={c.name}
+                  onClick={() => updateWall(wall.id, { color: c.hex || undefined })}
+                  className={`h-7 rounded-lg border transition-all text-[10px] font-medium ${
+                    (wall.color === c.hex || (!wall.color && c.hex === ''))
+                      ? 'ring-2 ring-blue-500 border-transparent text-slate-800 scale-105'
+                      : 'border-slate-300 hover:scale-102 text-slate-600 bg-white'
+                  }`}
+                  style={{ borderLeft: c.hex ? `4px solid ${c.hex}` : undefined }}
+                  title={c.name}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           <button
@@ -494,6 +524,28 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={Math.round(fixture.rotation)}
+                onChange={(e) => updateFixture(fixture.id, { rotation: Number(e.target.value) })}
+                className="flex-1 accent-blue-600 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+              />
+              <input
+                type="number"
+                min="0"
+                max="360"
+                value={Math.round(fixture.rotation)}
+                onChange={(e) => {
+                  let val = Number(e.target.value) || 0;
+                  val = ((val % 360) + 360) % 360;
+                  updateFixture(fixture.id, { rotation: val });
+                }}
+                className="w-16 prop-input text-center font-mono"
+              />
+            </div>
           </div>
 
           <button
@@ -529,6 +581,42 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
           >
             <Trash2 size={12} />
             Delete Fixture
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Measurement Properties ──
+  if (selection.type === 'measurement') {
+    const measurement = plan.measurements?.find((m) => m.id === selection.id);
+    if (!measurement) return null;
+
+    const len = distance(measurement.p1, measurement.p2);
+
+    return (
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Measurement</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          <div>
+            <label className="prop-label">Distance</label>
+            <div className="prop-input bg-slate-50 border border-slate-200 font-mono text-slate-700">
+              {Math.round(len)} mm
+            </div>
+          </div>
+
+          <button
+            onClick={deleteSelected}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors"
+          >
+            <Trash2 size={12} />
+            Delete Measurement
           </button>
         </div>
       </div>

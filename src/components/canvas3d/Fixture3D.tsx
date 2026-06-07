@@ -250,6 +250,174 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       );
     }
 
+    // Adult Scale Figure
+    if (def.id.includes('adult')) {
+      return (
+        <group>
+          {/* Torso/Body */}
+          <mesh position={[0, 1.25 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.12, 0.16, 1.25, 16]} />
+            <meshStandardMaterial color="#f43f5e" roughness={0.5} />
+          </mesh>
+          {/* Shoulders joint */}
+          <mesh position={[0, 1.25 - 0.05, 0]} castShadow>
+            <boxGeometry args={[0.34, 0.08, 0.14]} />
+            <meshStandardMaterial color="#f43f5e" roughness={0.5} />
+          </mesh>
+          {/* Head */}
+          <mesh position={[0, 1.25 + 0.15, 0]} castShadow>
+            <sphereGeometry args={[0.11, 16, 16]} />
+            <meshStandardMaterial color="#fda4af" roughness={0.4} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Double Vanity Basin
+    if (def.id.includes('double-vanity')) {
+      return (
+        <group>
+          {/* Vanity cabinet */}
+          <mesh position={[0, (height - 0.04) / 2, 0]} castShadow>
+            <boxGeometry args={[width, height - 0.04, depth]} />
+            <meshStandardMaterial color="#cbd5e1" roughness={0.4} />
+          </mesh>
+          {/* Worktop rim */}
+          <mesh position={[0, height - 0.04 / 2, 0]} castShadow>
+            <boxGeometry args={[width + 0.01, 0.04, depth + 0.01]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.1} />
+          </mesh>
+          {/* Left sink basin hole visual */}
+          <mesh position={[-width * 0.24, height, 0]}>
+            <boxGeometry args={[width * 0.32, 0.02, depth * 0.65]} />
+            <meshStandardMaterial color="#cbd5e1" roughness={0.25} />
+          </mesh>
+          {/* Right sink basin hole visual */}
+          <mesh position={[width * 0.24, height, 0]}>
+            <boxGeometry args={[width * 0.32, 0.02, depth * 0.65]} />
+            <meshStandardMaterial color="#cbd5e1" roughness={0.25} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Freestanding Bath
+    if (def.id.includes('freestanding-bath')) {
+      return (
+        <group>
+          {/* Oval Tub */}
+          <mesh position={[0, height / 2, 0]} castShadow>
+            <cylinderGeometry args={[width / 2, width / 2 - 0.05, height, 32, 1]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.1} />
+          </mesh>
+          {/* Rim */}
+          <mesh position={[0, height, 0]}>
+            <torusGeometry args={[width / 2 - 0.02, 0.02, 12, 48]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.05} />
+          </mesh>
+          {/* Water */}
+          <mesh position={[0, height - 0.08, 0]}>
+            <cylinderGeometry args={[width / 2 - 0.03, width / 2 - 0.04, 0.01, 32]} />
+            <meshStandardMaterial color="#bae6fd" transparent opacity={0.65} roughness={0.05} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Chairs & Sofas & Armchairs
+    if (def.id.includes('sofa') || def.id.includes('armchair') || def.iconType === 'chair' || def.id.includes('chair')) {
+      const isSofa3 = def.id.includes('sofa-3s');
+      const isSofa2 = def.id.includes('sofa-2s');
+      const isArmchair = def.id.includes('armchair');
+      const seatColor = def.color || '#10b981';
+      const armWidth = isArmchair ? 0.12 : 0.08;
+
+      return (
+        <group>
+          {/* Seat base frame */}
+          <mesh position={[0, (height * 0.45) / 2, 0]} castShadow>
+            <boxGeometry args={[width, height * 0.45, depth]} />
+            <meshStandardMaterial color={seatColor} roughness={0.7} />
+          </mesh>
+          {/* Backrest */}
+          <mesh position={[0, height * 0.75, -depth / 2 + 0.05]} castShadow>
+            <boxGeometry args={[width, height * 0.5, 0.1]} />
+            <meshStandardMaterial color={seatColor} roughness={0.7} />
+          </mesh>
+          {/* Armrests */}
+          {(isSofa3 || isSofa2 || isArmchair) && (
+            <>
+              <mesh position={[-width / 2 + armWidth / 2, (height * 0.6) / 2, 0]} castShadow>
+                <boxGeometry args={[armWidth, height * 0.6, depth]} />
+                <meshStandardMaterial color={seatColor} roughness={0.7} />
+              </mesh>
+              <mesh position={[width / 2 - armWidth / 2, (height * 0.6) / 2, 0]} castShadow>
+                <boxGeometry args={[armWidth, height * 0.6, depth]} />
+                <meshStandardMaterial color={seatColor} roughness={0.7} />
+              </mesh>
+            </>
+          )}
+          {/* Four wooden chair legs (for standard chairs) */}
+          {!isSofa3 && !isSofa2 && !isArmchair && (
+            <>
+              <mesh position={[-width / 2 + 0.03, (height * 0.4) / 2, -depth / 2 + 0.03]} castShadow>
+                <cylinderGeometry args={[0.02, 0.015, height * 0.4, 8]} />
+                <meshStandardMaterial color="#78350f" roughness={0.4} />
+              </mesh>
+              <mesh position={[width / 2 - 0.03, (height * 0.4) / 2, -depth / 2 + 0.03]} castShadow>
+                <cylinderGeometry args={[0.02, 0.015, height * 0.4, 8]} />
+                <meshStandardMaterial color="#78350f" roughness={0.4} />
+              </mesh>
+              <mesh position={[-width / 2 + 0.03, (height * 0.4) / 2, depth / 2 - 0.03]} castShadow>
+                <cylinderGeometry args={[0.02, 0.015, height * 0.4, 8]} />
+                <meshStandardMaterial color="#78350f" roughness={0.4} />
+              </mesh>
+              <mesh position={[width / 2 - 0.03, (height * 0.4) / 2, depth / 2 - 0.03]} castShadow>
+                <cylinderGeometry args={[0.02, 0.015, height * 0.4, 8]} />
+                <meshStandardMaterial color="#78350f" roughness={0.4} />
+              </mesh>
+            </>
+          )}
+        </group>
+      );
+    }
+
+    // Tables & Desks & Islands
+    if (def.iconType === 'table' || def.id.includes('table') || def.id.includes('desk') || def.id.includes('island')) {
+      const topThickness = 0.04;
+      const legHeight = height - topThickness;
+      const legRadius = Math.max(0.02, Math.min(width, depth) * 0.04);
+      const tableColor = def.color || '#f59e0b';
+      const legColor = '#451a03'; // Dark wood legs
+
+      return (
+        <group>
+          {/* Tabletop */}
+          <mesh position={[0, height - topThickness / 2, 0]} castShadow>
+            <boxGeometry args={[width, topThickness, depth]} />
+            <meshStandardMaterial color={tableColor} roughness={0.45} />
+          </mesh>
+          {/* 4 Corner Legs */}
+          <mesh position={[-width / 2 + legRadius + 0.01, legHeight / 2, -depth / 2 + legRadius + 0.01]} castShadow>
+            <cylinderGeometry args={[legRadius, legRadius * 0.7, legHeight, 8]} />
+            <meshStandardMaterial color={legColor} roughness={0.5} />
+          </mesh>
+          <mesh position={[width / 2 - legRadius - 0.01, legHeight / 2, -depth / 2 + legRadius + 0.01]} castShadow>
+            <cylinderGeometry args={[legRadius, legRadius * 0.7, legHeight, 8]} />
+            <meshStandardMaterial color={legColor} roughness={0.5} />
+          </mesh>
+          <mesh position={[-width / 2 + legRadius + 0.01, legHeight / 2, depth / 2 - legRadius - 0.01]} castShadow>
+            <cylinderGeometry args={[legRadius, legRadius * 0.7, legHeight, 8]} />
+            <meshStandardMaterial color={legColor} roughness={0.5} />
+          </mesh>
+          <mesh position={[width / 2 - legRadius - 0.01, legHeight / 2, depth / 2 - legRadius - 0.01]} castShadow>
+            <cylinderGeometry args={[legRadius, legRadius * 0.7, legHeight, 8]} />
+            <meshStandardMaterial color={legColor} roughness={0.5} />
+          </mesh>
+        </group>
+      );
+    }
+
     // Default block representation
     return (
       <mesh position={[0, height / 2, 0]} castShadow>

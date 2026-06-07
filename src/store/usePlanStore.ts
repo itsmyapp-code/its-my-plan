@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Wall, Opening, Fixture, RoomPlan, SelectionState, PlanMetadata } from '@/types';
+import type { Wall, Opening, Fixture, RoomPlan, SelectionState, PlanMetadata, Measurement, Point } from '@/types';
 import { generateId } from '@/utils/idGenerator';
 import { WALL_THICKNESS_INTERNAL, WALL_THICKNESS_EXTERNAL, DEFAULT_PRINT_SCALE } from '@/constants';
 import { useUIStore } from '@/store/useUIStore';
@@ -10,6 +10,7 @@ interface HistoryEntry {
   walls: Wall[];
   openings: Opening[];
   fixtures: Fixture[];
+  measurements?: Measurement[];
 }
 
 const MAX_HISTORY = 50;
@@ -54,6 +55,10 @@ interface PlanState {
 
   // Delete selected element
   deleteSelected: () => void;
+
+  // Measurement actions
+  addMeasurement: (p1: Point, p2: Point) => string;
+  deleteMeasurement: (id: string) => void;
 }
 
 function defaultMetadata(): PlanMetadata {
@@ -73,6 +78,7 @@ function createEmptyPlan(): RoomPlan {
     walls: [],
     openings: [],
     fixtures: [],
+    measurements: [],
     metadata: defaultMetadata(),
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -84,6 +90,7 @@ function snapshotFromPlan(plan: RoomPlan): HistoryEntry {
     walls: JSON.parse(JSON.stringify(plan.walls)),
     openings: JSON.parse(JSON.stringify(plan.openings)),
     fixtures: JSON.parse(JSON.stringify(plan.fixtures)),
+    measurements: JSON.parse(JSON.stringify(plan.measurements || [])),
   };
 }
 
@@ -107,6 +114,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
         walls: JSON.parse(JSON.stringify(entry.walls)),
         openings: JSON.parse(JSON.stringify(entry.openings)),
         fixtures: JSON.parse(JSON.stringify(entry.fixtures)),
+        measurements: JSON.parse(JSON.stringify(entry.measurements || [])),
         updatedAt: Date.now(),
       },
       historyIndex: historyIndex - 1,
@@ -127,6 +135,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
         walls: JSON.parse(JSON.stringify(entry.walls)),
         openings: JSON.parse(JSON.stringify(entry.openings)),
         fixtures: JSON.parse(JSON.stringify(entry.fixtures)),
+        measurements: JSON.parse(JSON.stringify(entry.measurements || [])),
         updatedAt: Date.now(),
       },
       historyIndex: nextIndex - 1,
@@ -384,6 +393,53 @@ export const usePlanStore = create<PlanState>((set, get) => ({
       case 'fixture':
         get().deleteFixture(selection.id);
         break;
+      case 'measurement':
+        get().deleteMeasurement(selection.id);
+        break;
     }
+  },
+
+  addMeasurement: (p1, p2) => {
+    const id = generateId();
+    const state = get();
+    const snapshot = snapshotFromPlan(state.plan);
+    const newHistory = [...state.history.slice(0, state.historyIndex + 2), snapshot].slice(-MAX_HISTORY);
+
+    const measurements = state.plan.measurements || [];
+    set({
+      plan: {
+        ...state.plan,
+        measurements: [...measurements, { id, p1, p2 }],
+        updatedAt: Date.now(),
+      },
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      canUndo: true,
+      canRedo: false,
+    });
+    return id;
+  },
+
+  deleteMeasurement: (id) => {
+    const state = get();
+    const snapshot = snapshotFromPlan(state.plan);
+    const newHistory = [...state.history.slice(0, state.historyIndex + 2), snapshot].slice(-MAX_HISTORY);
+
+    const measurements = state.plan.measurements || [];
+    set({
+      plan: {
+        ...state.plan,
+        measurements: measurements.filter((m) => m.id !== id),
+        updatedAt: Date.now(),
+      },
+      selection:
+        state.selection.type === 'measurement' && state.selection.id === id
+          ? { type: null, id: null }
+          : state.selection,
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      canUndo: true,
+      canRedo: false,
+    });
   },
 }));

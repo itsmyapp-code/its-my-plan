@@ -232,20 +232,6 @@ export function AppShell() {
             </span>
           )}
 
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
-            user
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              : firebaseEnabled
-              ? 'bg-blue-50 border-blue-200 text-blue-700'
-              : 'bg-slate-50 border-slate-200 text-slate-500'
-          }`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${
-              user ? 'bg-emerald-500 animate-pulse' : firebaseEnabled ? 'bg-blue-500' : 'bg-slate-400'
-            }`} />
-            <span className="text-[10px] font-medium uppercase tracking-wider">
-              {user ? 'Cloud Sync' : firebaseEnabled ? 'Firebase Guest' : 'Zero Server'}
-            </span>
-          </div>
         </div>
       </header>
 

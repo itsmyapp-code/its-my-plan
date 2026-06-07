@@ -21,9 +21,9 @@ export function Canvas2D() {
   const isPanning = useRef(false);
   const lastPanPos = useRef<{ x: number; y: number } | null>(null);
 
-  const { plan, addWall, updateWall, select, clearSelection } = usePlanStore();
+  const { plan, addWall, updateWall, select, clearSelection, selection } = usePlanStore();
   const { activeTool, isDrawing, drawStart, drawPreview, startDrawing, updateDrawPreview, cancelDrawing } = useToolStore();
-  const { viewport, setViewport } = useUIStore();
+  const { viewport, setViewport, viewSettings } = useUIStore();
 
   const draggedElement = useRef<{
     id: string;
@@ -182,7 +182,9 @@ export function Canvas2D() {
           setMeasureStart(snap.point);
           setMeasureEnd(null);
         } else {
-          setMeasureEnd(snap.point);
+          usePlanStore.getState().addMeasurement(measureStart, snap.point);
+          setMeasureStart(null);
+          setMeasureEnd(null);
         }
         setSnapResult(snap);
         return;
@@ -491,6 +493,77 @@ export function Canvas2D() {
             )}
           </g>
         )}
+
+        {/* Persistent Measurements Layer */}
+        {viewSettings.showDimensions && (plan.measurements || []).map((m) => {
+          const mStartPx = { x: m.p1.x * SCALE_2D, y: m.p1.y * SCALE_2D };
+          const mEndPx = { x: m.p2.x * SCALE_2D, y: m.p2.y * SCALE_2D };
+          const mLen = distance(m.p1, m.p2);
+          const mMid = { x: (mStartPx.x + mEndPx.x) / 2, y: (mStartPx.y + mEndPx.y) / 2 };
+          const isMSelected = selection.type === 'measurement' && selection.id === m.id;
+
+          const strokeColor = isMSelected ? 'var(--brand-orange)' : '#64748b';
+          const strokeWidth = isMSelected ? 2.0 : 1.0;
+          const circleColor = isMSelected ? 'var(--brand-orange)' : '#64748b';
+
+          return (
+            <g
+              key={m.id}
+              onClick={(e) => {
+                if (activeTool === 'select') {
+                  e.stopPropagation();
+                  select('measurement', m.id);
+                }
+              }}
+              className="cursor-pointer"
+            >
+              {/* Invisible wider line to make it easy to click/hover */}
+              <line
+                x1={mStartPx.x}
+                y1={mStartPx.y}
+                x2={mEndPx.x}
+                y2={mEndPx.y}
+                stroke="transparent"
+                strokeWidth={15}
+                className="pointer-events-auto"
+              />
+              <line
+                x1={mStartPx.x}
+                y1={mStartPx.y}
+                x2={mEndPx.x}
+                y2={mEndPx.y}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeDasharray={isMSelected ? undefined : "3 3"}
+              />
+              <circle cx={mStartPx.x} cy={mStartPx.y} r={isMSelected ? 3.5 : 2.5} fill={circleColor} />
+              <circle cx={mEndPx.x} cy={mEndPx.y} r={isMSelected ? 3.5 : 2.5} fill={circleColor} />
+              <g className="pointer-events-none">
+                <rect
+                  x={mMid.x - 30}
+                  y={mMid.y - 8}
+                  width={60}
+                  height={16}
+                  rx={4}
+                  fill={isMSelected ? 'var(--brand-orange)' : '#475569'}
+                  stroke={isMSelected ? 'var(--brand-orange)' : '#94a3b8'}
+                  strokeWidth={0.5}
+                />
+                <text
+                  x={mMid.x}
+                  y={mMid.y + 3.2}
+                  textAnchor="middle"
+                  fontSize={8}
+                  fontWeight="600"
+                  fontFamily="var(--font-sans)"
+                  fill="#ffffff"
+                >
+                  {formatMM(mLen)}
+                </text>
+              </g>
+            </g>
+          );
+        })}
 
         {/* Snap indicator */}
         {snapResult && snapResult.snapType !== 'grid' && (
