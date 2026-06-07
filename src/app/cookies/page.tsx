@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PolicyFooter } from "@/components/PolicyFooter";
 
 export default function CookiesPage() {
   return (
@@ -32,6 +33,7 @@ export default function CookiesPage() {
           <p className="mt-12 text-sm text-slate-500 font-mono">Contact: <a href="mailto:hello@itsmyapp.co.uk" className="text-blue-400 hover:underline">hello@itsmyapp.co.uk</a></p>
         </div>
       </div>
+      <PolicyFooter />
     </main>
   );
 }
