@@ -157,6 +157,7 @@ async function drawPDFDecorations(
 
   const leftParts: string[] = [
     `Plan: ${plan.name || 'Untitled Plan'}`,
+    `Version: ${meta.version || '1.0'}`,
     meta.jobNumber ? `Job: ${meta.jobNumber}` : '',
     meta.clientName ? `Client: ${meta.clientName}` : '',
   ].filter(Boolean);
