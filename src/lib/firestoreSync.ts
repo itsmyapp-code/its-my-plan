@@ -28,7 +28,11 @@ export async function savePlanToFirestore(uid: string, plan: RoomPlan): Promise<
   if (!db) return;
 
   const ref = doc(db, 'users', uid, 'plans', plan.id);
-  await withTimeout(setDoc(ref, { ...plan, updatedAt: Date.now() }, { merge: true }));
+  
+  // Strip out any undefined properties recursively to satisfy Firestore setDoc validation rules
+  const cleanedPlan = JSON.parse(JSON.stringify(plan));
+  
+  await withTimeout(setDoc(ref, { ...cleanedPlan, updatedAt: Date.now() }, { merge: true }));
 }
 
 /**

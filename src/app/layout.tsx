@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 
 import { CookieBanner } from "@/components/CookieBanner";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { RegisterServiceWorker } from "@/components/RegisterServiceWorker";
 
 export default function RootLayout({
   children,
@@ -42,7 +43,9 @@ export default function RootLayout({
           {children}
         </AuthProvider>
         <CookieBanner />
+        <RegisterServiceWorker />
       </body>
     </html>
   );
 }
+

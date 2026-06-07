@@ -1,6 +1,11 @@
 {
   "name": "its my plan",
   "short_name": "itsmyplan",
+  "description": "A free, zero-server browser-based 2D room drawing tool with instant 3D dollhouse preview. Complete privacy — everything runs in your browser.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "orientation": "any",
   "icons": [
     { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
