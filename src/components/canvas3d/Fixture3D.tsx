@@ -185,6 +185,58 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       );
     }
 
+    // Appliance (Washing Machine / Tumble Dryer)
+    if (def.iconType === 'appliance') {
+      const isDryer = def.id.includes('dryer');
+      return (
+        <group>
+          {/* Main Appliance Cabinet */}
+          <mesh position={[0, height / 2, 0]} castShadow>
+            <boxGeometry args={[width, height, depth]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.2} />
+          </mesh>
+          {/* Top Control Panel Drawer */}
+          <mesh position={[0, height - 0.12 / 2 - 0.01, depth / 2 + 0.005]} castShadow>
+            <boxGeometry args={[width * 0.96, 0.12, 0.01]} />
+            <meshStandardMaterial color="#e2e8f0" roughness={0.3} />
+          </mesh>
+          {/* Dial button */}
+          <mesh position={[-width * 0.25, height - 0.07, depth / 2 + 0.015]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.02, 12]} />
+            <meshStandardMaterial color="#64748b" metalness={0.7} roughness={0.2} />
+          </mesh>
+          {/* Round Glass Door */}
+          <mesh position={[0, height * 0.42, depth / 2 + 0.015]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+            <cylinderGeometry args={[width * 0.25, width * 0.25, 0.03, 32, 1]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.1} />
+          </mesh>
+          {/* Glass window panel inside door */}
+          <mesh position={[0, height * 0.42, depth / 2 + 0.026]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[width * 0.18, width * 0.18, 0.01, 24]} />
+            <meshStandardMaterial color={isDryer ? "#cbd5e1" : "#38bdf8"} transparent opacity={isDryer ? 0.3 : 0.4} roughness={0.05} />
+          </mesh>
+        </group>
+      );
+    }
+
+    // Kitchen Worktop
+    if (def.id === 'uk-kitchen-worktop') {
+      return (
+        <group>
+          {/* Cabinet Base */}
+          <mesh position={[0, (height - 0.04) / 2, 0]} castShadow>
+            <boxGeometry args={[width, height - 0.04, depth]} />
+            <meshStandardMaterial color="#f1f5f9" roughness={0.5} />
+          </mesh>
+          {/* Wooden Countertop */}
+          <mesh position={[0, height - 0.04 / 2, 0]} castShadow>
+            <boxGeometry args={[width + 0.01, 0.04, depth + 0.01]} />
+            <meshStandardMaterial color="#7c2d12" roughness={0.4} />
+          </mesh>
+        </group>
+      );
+    }
+
     // Kitchen base units
     if (def.category === 'kitchen' && !def.id.includes('tower')) {
       return (
@@ -435,23 +487,7 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       );
     }
 
-    // Kitchen Worktop
-    if (def.id === 'uk-kitchen-worktop') {
-      return (
-        <group>
-          {/* Cabinet Base */}
-          <mesh position={[0, (height - 0.04) / 2, 0]} castShadow>
-            <boxGeometry args={[width, height - 0.04, depth]} />
-            <meshStandardMaterial color="#f1f5f9" roughness={0.5} />
-          </mesh>
-          {/* Wooden Countertop */}
-          <mesh position={[0, height - 0.04 / 2, 0]} castShadow>
-            <boxGeometry args={[width + 0.01, 0.04, depth + 0.01]} />
-            <meshStandardMaterial color="#7c2d12" roughness={0.4} />
-          </mesh>
-        </group>
-      );
-    }
+
 
     // Radiator (wall panel radiator with fins)
     if (def.iconType === 'radiator') {
@@ -523,39 +559,7 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       );
     }
 
-    // Appliance (Washing Machine / Tumble Dryer)
-    if (def.iconType === 'appliance') {
-      const isDryer = def.id.includes('dryer');
-      return (
-        <group>
-          {/* Main Appliance Cabinet */}
-          <mesh position={[0, height / 2, 0]} castShadow>
-            <boxGeometry args={[width, height, depth]} />
-            <meshStandardMaterial color="#f8fafc" roughness={0.2} />
-          </mesh>
-          {/* Top Control Panel Drawer */}
-          <mesh position={[0, height - 0.12 / 2 - 0.01, depth / 2 + 0.005]} castShadow>
-            <boxGeometry args={[width * 0.96, 0.12, 0.01]} />
-            <meshStandardMaterial color="#e2e8f0" roughness={0.3} />
-          </mesh>
-          {/* Dial button */}
-          <mesh position={[-width * 0.25, height - 0.07, depth / 2 + 0.015]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.02, 12]} />
-            <meshStandardMaterial color="#64748b" metalness={0.7} roughness={0.2} />
-          </mesh>
-          {/* Round Glass Door */}
-          <mesh position={[0, height * 0.42, depth / 2 + 0.015]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-            <cylinderGeometry args={[width * 0.25, width * 0.25, 0.03, 32, 1]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.1} />
-          </mesh>
-          {/* Glass window panel inside door */}
-          <mesh position={[0, height * 0.42, depth / 2 + 0.026]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[width * 0.18, width * 0.18, 0.01, 24]} />
-            <meshStandardMaterial color={isDryer ? "#cbd5e1" : "#38bdf8"} transparent opacity={isDryer ? 0.3 : 0.4} roughness={0.05} />
-          </mesh>
-        </group>
-      );
-    }
+
 
     // Default block representation
     return (
