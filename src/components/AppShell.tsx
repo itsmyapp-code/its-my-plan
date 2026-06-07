@@ -109,10 +109,15 @@ export function AppShell() {
   };
 
   const handlePrint2D = async () => {
+    if (viewMode !== '2d') {
+      useUIStore.getState().setViewMode('2d');
+      await new Promise((r) => setTimeout(r, 800));
+    }
     setIsPrinting2D(true);
     await export2DPDF(plan, '#canvas-svg');
     setIsPrinting2D(false);
   };
+
 
   const handlePrint3D = async () => {
     if (viewMode !== '3d') {
