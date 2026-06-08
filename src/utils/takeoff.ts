@@ -229,37 +229,48 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
   const { walls } = plan;
   if (walls.length < 3) return { area: 0, isOpen: true };
 
-  const snap = (val: number) => Math.round(val / 10) * 10;
-  const getVertexKey = (p: { x: number; y: number }) => `${snap(p.x)},${snap(p.y)}`;
+  // 1. Snap endpoints within 25mm to consolidate unique vertices
+  const snapTolerance = 25; // mm
+  const vertices: { x: number; y: number }[] = [];
+
+  const getVertexId = (p: { x: number; y: number }) => {
+    for (let i = 0; i < vertices.length; i++) {
+      const v = vertices[i];
+      if (Math.hypot(v.x - p.x, v.y - p.y) < snapTolerance) {
+        return i;
+      }
+    }
+    vertices.push({ x: p.x, y: p.y });
+    return vertices.length - 1;
+  };
 
   interface GraphEdge {
     id: string;
-    p1Key: string;
-    p2Key: string;
-    p1: { x: number; y: number };
-    p2: { x: number; y: number };
+    v1: number;
+    v2: number;
   }
 
   let edges: GraphEdge[] = walls.map((w) => ({
     id: w.id,
-    p1Key: getVertexKey(w.p1),
-    p2Key: getVertexKey(w.p2),
-    p1: w.p1,
-    p2: w.p2,
+    v1: getVertexId(w.p1),
+    v2: getVertexId(w.p2),
   }));
 
-  // Recursively prune dangling wall edges (endpoints of degree 1)
+  // Remove zero-length/self-loop edges
+  edges = edges.filter((e) => e.v1 !== e.v2);
+
+  // 2. Recursively prune dangling edges (nodes with degree < 2)
   let changed = true;
   while (changed) {
     changed = false;
-    const degree: { [key: string]: number } = {};
+    const degree = new Array(vertices.length).fill(0);
     for (const e of edges) {
-      degree[e.p1Key] = (degree[e.p1Key] || 0) + 1;
-      degree[e.p2Key] = (degree[e.p2Key] || 0) + 1;
+      degree[e.v1]++;
+      degree[e.v2]++;
     }
 
     const prevCount = edges.length;
-    edges = edges.filter((e) => degree[e.p1Key] >= 2 && degree[e.p2Key] >= 2);
+    edges = edges.filter((e) => degree[e.v1] >= 2 && degree[e.v2] >= 2);
     if (edges.length < prevCount) {
       changed = true;
     }
@@ -269,81 +280,111 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
     return { area: 0, isOpen: true };
   }
 
-  // Build adjacency list for remaining edges
+  // 3. Build adjacency lists of directed edges
   interface AdjItem {
-    nextKey: string;
+    to: number;
+    angle: number;
     edgeId: string;
-    p1: { x: number; y: number };
-    p2: { x: number; y: number };
   }
-  const adj: { [key: string]: AdjItem[] } = {};
+  const adj: AdjItem[][] = Array.from({ length: vertices.length }, () => []);
   for (const e of edges) {
-    if (!adj[e.p1Key]) adj[e.p1Key] = [];
-    if (!adj[e.p2Key]) adj[e.p2Key] = [];
-    adj[e.p1Key].push({ nextKey: e.p2Key, edgeId: e.id, p1: e.p1, p2: e.p2 });
-    adj[e.p2Key].push({ nextKey: e.p1Key, edgeId: e.id, p1: e.p2, p2: e.p1 });
+    const p1 = vertices[e.v1];
+    const p2 = vertices[e.v2];
+    
+    // Invert y-coordinates to work in standard Cartesian space where counter-clockwise angles are positive
+    const angle12 = Math.atan2(-(p2.y - p1.y), p2.x - p1.x);
+    const angle21 = Math.atan2(-(p1.y - p2.y), p1.x - p2.x);
+
+    adj[e.v1].push({ to: e.v2, angle: angle12, edgeId: e.id });
+    adj[e.v2].push({ to: e.v1, angle: angle21, edgeId: e.id });
   }
 
-  const visitedEdges = new Set<string>();
+  // Trace simple faces (rooms) using the Leftmost Turn rule
+  const visitedHalfEdges = new Set<string>();
+  const getHalfEdgeKey = (from: number, to: number) => `${from}->${to}`;
+
   let totalAreaMM2 = 0;
+  let hasValidCycles = false;
 
-  const keys = Object.keys(adj);
-  for (const startKey of keys) {
-    for (const startEdge of adj[startKey]) {
-      if (visitedEdges.has(startEdge.edgeId)) continue;
+  for (let startV = 0; startV < vertices.length; startV++) {
+    for (const startEdge of adj[startV]) {
+      const startKey = getHalfEdgeKey(startV, startEdge.to);
+      if (visitedHalfEdges.has(startKey)) continue;
 
-      const pathKeys: string[] = [startKey];
-      const pathPoints: { x: number; y: number }[] = [startEdge.p1];
-      const pathEdges: string[] = [startEdge.edgeId];
-      
-      let currentKey = startEdge.nextKey;
-      let prevEdgeId = startEdge.edgeId;
-      pathPoints.push(startEdge.p2);
+      const path: number[] = [startV];
+      let currentV = startEdge.to;
+      let prevV = startV;
+      visitedHalfEdges.add(startKey);
 
       let closed = false;
-      const pathKeySet = new Set<string>([startKey]);
+      const maxSteps = edges.length * 2;
 
-      while (!closed) {
-        if (pathKeySet.has(currentKey)) {
-          const cycleStartIndex = pathKeys.indexOf(currentKey);
-          const cyclePoints = pathPoints.slice(cycleStartIndex);
-          
-          let area = 0;
-          const n = cyclePoints.length;
-          for (let i = 0; i < n; i++) {
-            const j = (i + 1) % n;
-            area += cyclePoints[i].x * cyclePoints[j].y;
-            area -= cyclePoints[j].x * cyclePoints[i].y;
-          }
-          totalAreaMM2 += Math.abs(area) / 2;
-
-          for (let i = cycleStartIndex; i < pathEdges.length; i++) {
-            visitedEdges.add(pathEdges[i]);
-          }
+      for (let step = 0; step < maxSteps; step++) {
+        path.push(currentV);
+        if (currentV === startV) {
           closed = true;
           break;
         }
 
-        pathKeys.push(currentKey);
-        pathKeySet.add(currentKey);
+        const currentAdj = adj[currentV];
+        const pPrev = vertices[prevV];
+        const pCurr = vertices[currentV];
+        // Incoming vector from prevV to currentV
+        const incomingAngle = Math.atan2(-(pPrev.y - pCurr.y), pPrev.x - pCurr.x);
 
-        const nextEdges = adj[currentKey]?.filter(
-          (cand) => cand.edgeId !== prevEdgeId && !visitedEdges.has(cand.edgeId)
-        );
+        let bestNext: AdjItem | null = null;
+        let maxDiff = -Infinity;
 
-        if (!nextEdges || nextEdges.length === 0) {
-          break;
+        // Choose the outgoing edge that represents the leftmost (most counter-clockwise) turn
+        for (const cand of currentAdj) {
+          if (cand.to === prevV) continue; // Skip U-turns back along the incoming edge
+
+          let diff = cand.angle - incomingAngle;
+          while (diff <= -Math.PI) diff += 2 * Math.PI;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+
+          if (diff > maxDiff) {
+            maxDiff = diff;
+            bestNext = cand;
+          }
         }
 
-        const next = nextEdges[0];
-        pathPoints.push(next.p2);
-        pathEdges.push(next.edgeId);
-        prevEdgeId = next.edgeId;
-        currentKey = next.nextKey;
+        if (!bestNext) {
+          break; // Dead end (should be impossible in a pruned graph with degree >= 2)
+        }
+
+        const nextKey = getHalfEdgeKey(currentV, bestNext.to);
+        if (visitedHalfEdges.has(nextKey)) {
+          break; // Face boundary already visited
+        }
+
+        visitedHalfEdges.add(nextKey);
+        prevV = currentV;
+        currentV = bestNext.to;
+      }
+
+      if (closed && path.length >= 4) {
+        // Calculate signed Shoelace area in standard Cartesian (y inverted)
+        let area = 0;
+        const n = path.length - 1;
+        for (let i = 0; i < n; i++) {
+          const pCurrent = vertices[path[i]];
+          const pNext = vertices[path[i + 1]];
+          area += pCurrent.x * (-pNext.y);
+          area -= pNext.x * (-pCurrent.y);
+        }
+        area = area / 2;
+
+        // In Cartesian coordinates, leftmost turn traversal traces inner rooms counter-clockwise (positive area).
+        // The outer infinite boundary has clockwise traversal (negative area).
+        if (area > 0) {
+          totalAreaMM2 += area;
+          hasValidCycles = true;
+        }
       }
     }
   }
 
   const areaM2 = totalAreaMM2 / 1_000_000;
-  return { area: areaM2, isOpen: areaM2 === 0 };
+  return { area: areaM2, isOpen: !hasValidCycles || areaM2 === 0 };
 }
