@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Menu, X, Upload, FileJson, FileText,
-  RefreshCw, Settings, LogIn, LogOut, HelpCircle, FolderOpen,
+  RefreshCw, Settings, LogIn, LogOut, HelpCircle, FolderOpen, Copy,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useUIStore } from '@/store/useUIStore';
@@ -18,6 +18,7 @@ interface HamburgerMenuProps {
   onPrint3D: () => void;
   onOpenSettings: () => void;
   onOpenPlans: () => void;
+  onSaveAs: () => void;
   isPrinting2D: boolean;
   isPrinting3D: boolean;
 }
@@ -29,6 +30,7 @@ export function HamburgerMenu({
   onPrint3D,
   onOpenSettings,
   onOpenPlans,
+  onSaveAs,
   isPrinting2D,
   isPrinting3D,
 }: HamburgerMenuProps) {
@@ -74,6 +76,11 @@ export function HamburgerMenu({
           <button className={`${menuItemClass} mx-1`} onClick={() => { onOpenPlans(); close(); }}>
             <FolderOpen size={14} className="text-blue-500" />
             My Saved Plans
+          </button>
+
+          <button className={`${menuItemClass} mx-1`} onClick={() => { onSaveAs(); close(); }}>
+            <Copy size={14} className="text-blue-500" />
+            Save As (Copy)
           </button>
 
           <label className={`${menuItemClass} cursor-pointer mx-1`} onClick={close}>

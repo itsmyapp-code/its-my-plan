@@ -21,6 +21,7 @@ export interface FixtureDefinition {
     | 'radiator'
     | 'tv'
     | 'appliance'
+    | 'shelves'
     | 'generic';
   width: number;    // mm (along X when rotation=0)
   depth: number;    // mm (along Y when rotation=0)
@@ -427,6 +428,16 @@ export const FIXTURE_LIBRARY: FixtureDefinition[] = [
     depth: 400,
     color: '#475569',
     clearance: { front: 500, sides: 100, description: 'Maintain space around console' },
+  },
+  {
+    id: 'uk-furniture-shelves',
+    label: 'Wall Shelves',
+    category: 'furniture',
+    iconType: 'shelves',
+    width: 900,
+    depth: 300,
+    color: '#b45309',
+    clearance: { front: 300, sides: 0, description: 'Allow access area in front of shelving' },
   },
 
   // ═══════════════════════════════════════

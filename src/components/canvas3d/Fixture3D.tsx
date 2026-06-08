@@ -12,6 +12,7 @@ interface Fixture3DProps {
 }
 
 export function Fixture3D({ fixture }: Fixture3DProps) {
+  const plan = usePlanStore((s) => s.plan);
   const selection = usePlanStore((s) => s.selection);
   const select = usePlanStore((s) => s.select);
   const isSelected = selection.type === 'fixture' && selection.id === fixture.id;
@@ -26,6 +27,7 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
     if (def.iconType === 'radiator' || def.id.includes('radiator')) return 0.6;
     if (def.iconType === 'tv') return 0.7;
     if (def.iconType === 'appliance') return 0.85;
+    if (def.iconType === 'shelves') return 1.85;
 
     if (def.category === 'bathroom') {
       if (def.id.includes('bath')) return 0.6;
@@ -52,6 +54,36 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
     if (def.category === 'electrical' || def.category === 'plumbing') return 0.08;
     return 0.7;
   }, [def]);
+
+  // Handle automatic stacking of laundry appliances placed on the same spot in 2D
+  const yOffset = useMemo(() => {
+    if (def.iconType !== 'appliance') return 0;
+
+    const overlapping = plan.fixtures.filter((f) => {
+      if (f.id === fixture.id) return false;
+      const otherDef = getFixtureDefinition(f.type);
+      if (otherDef?.iconType !== 'appliance') return false;
+
+      // Distance threshold: 100mm
+      const dist = Math.hypot(f.x - fixture.x, f.y - fixture.y);
+      return dist < 100;
+    });
+
+    if (overlapping.length === 0) return 0;
+
+    // Sort: Washing Machine on bottom, Tumble Dryer on top (fallback to id alphabetical sorting)
+    const all = [fixture, ...overlapping];
+    all.sort((a, b) => {
+      const aIsWasher = a.type.includes('washing');
+      const bIsWasher = b.type.includes('washing');
+      if (aIsWasher && !bIsWasher) return -1;
+      if (!aIsWasher && bIsWasher) return 1;
+      return a.id.localeCompare(b.id);
+    });
+
+    const myIndex = all.findIndex((f) => f.id === fixture.id);
+    return myIndex * 0.85; // 0.85m height stack offset per appliance
+  }, [fixture, plan.fixtures, def.iconType]);
 
   const rotationY = -(fixture.rotation * Math.PI) / 180;
 
@@ -100,12 +132,12 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
           <group>
             {/* Tray (Base) - positioned at the back-left corner, scaled to width and depth to support rectangular sizing */}
             <mesh position={[-width / 2, 0.04 / 2, -depth / 2]} scale={[width, 1, depth]} castShadow>
-              <cylinderGeometry args={[1, 1, 0.04, 32, 1, false, Math.PI * 1.5, Math.PI / 2]} />
+              <cylinderGeometry args={[1, 1, 0.04, 32, 1, false, 0, Math.PI / 2]} />
               <meshStandardMaterial color="#f1f5f9" roughness={0.1} />
             </mesh>
             {/* Curved Glass Screen - matching the tray's arc and scaled */}
             <mesh position={[-width / 2, height / 2, -depth / 2]} scale={[width, height, depth]} castShadow>
-              <cylinderGeometry args={[1, 1, 1, 32, 1, true, Math.PI * 1.5, Math.PI / 2]} />
+              <cylinderGeometry args={[1, 1, 1, 32, 1, true, 0, Math.PI / 2]} />
               <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} roughness={0.1} side={THREE.DoubleSide} />
             </mesh>
             {/* Corner Post (Back-Left) */}
@@ -223,9 +255,14 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
     if (def.id === 'uk-kitchen-worktop') {
       return (
         <group>
-          {/* Cabinet Base */}
-          <mesh position={[0, (height - 0.04) / 2, 0]} castShadow>
-            <boxGeometry args={[width, height - 0.04, depth]} />
+          {/* Left Side Panel (Gable End) */}
+          <mesh position={[-width / 2 + 0.01, (height - 0.04) / 2, 0]} castShadow>
+            <boxGeometry args={[0.02, height - 0.04, depth]} />
+            <meshStandardMaterial color="#f1f5f9" roughness={0.5} />
+          </mesh>
+          {/* Right Side Panel (Gable End) */}
+          <mesh position={[width / 2 - 0.01, (height - 0.04) / 2, 0]} castShadow>
+            <boxGeometry args={[0.02, height - 0.04, depth]} />
             <meshStandardMaterial color="#f1f5f9" roughness={0.5} />
           </mesh>
           {/* Wooden Countertop */}
@@ -319,24 +356,56 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
       );
     }
 
-    // Adult Scale Figure
+    // Adult Scale Figure (Mannequin)
     if (def.id.includes('adult')) {
+      const mannequinColor = "#fda4af"; // Soft pinkish rose
+      const clothesColor = "#f43f5e"; // Vibrant rose
       return (
         <group>
-          {/* Torso/Body */}
-          <mesh position={[0, 1.25 / 2, 0]} castShadow>
-            <cylinderGeometry args={[0.12, 0.16, 1.25, 16]} />
-            <meshStandardMaterial color="#f43f5e" roughness={0.5} />
+          {/* Left Leg */}
+          <mesh position={[-0.08, 0.8 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.03, 0.8, 12]} />
+            <meshStandardMaterial color={mannequinColor} roughness={0.4} />
           </mesh>
-          {/* Shoulders joint */}
-          <mesh position={[0, 1.25 - 0.05, 0]} castShadow>
+          {/* Right Leg */}
+          <mesh position={[0.08, 0.8 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.03, 0.8, 12]} />
+            <meshStandardMaterial color={mannequinColor} roughness={0.4} />
+          </mesh>
+          {/* Hips / Pelvis */}
+          <mesh position={[0, 0.8 + 0.15 / 2, 0]} castShadow>
+            <boxGeometry args={[0.24, 0.15, 0.15]} />
+            <meshStandardMaterial color={clothesColor} roughness={0.5} />
+          </mesh>
+          {/* Torso */}
+          <mesh position={[0, 0.95 + 0.45 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.11, 0.12, 0.45, 16]} />
+            <meshStandardMaterial color={clothesColor} roughness={0.5} />
+          </mesh>
+          {/* Shoulders */}
+          <mesh position={[0, 1.4, 0]} castShadow>
             <boxGeometry args={[0.34, 0.08, 0.14]} />
-            <meshStandardMaterial color="#f43f5e" roughness={0.5} />
+            <meshStandardMaterial color={clothesColor} roughness={0.5} />
+          </mesh>
+          {/* Left Arm */}
+          <mesh position={[-0.18, 1.4 - 0.55 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.03, 0.025, 0.55, 10]} />
+            <meshStandardMaterial color={mannequinColor} roughness={0.4} />
+          </mesh>
+          {/* Right Arm */}
+          <mesh position={[0.18, 1.4 - 0.55 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.03, 0.025, 0.55, 10]} />
+            <meshStandardMaterial color={mannequinColor} roughness={0.4} />
+          </mesh>
+          {/* Neck */}
+          <mesh position={[0, 1.44 + 0.06 / 2, 0]} castShadow>
+            <cylinderGeometry args={[0.035, 0.035, 0.06, 8]} />
+            <meshStandardMaterial color={mannequinColor} roughness={0.4} />
           </mesh>
           {/* Head */}
-          <mesh position={[0, 1.25 + 0.15, 0]} castShadow>
+          <mesh position={[0, 1.5 + 0.11, 0]} castShadow>
             <sphereGeometry args={[0.11, 16, 16]} />
-            <meshStandardMaterial color="#fda4af" roughness={0.4} />
+            <meshStandardMaterial color={mannequinColor} roughness={0.4} />
           </mesh>
         </group>
       );
@@ -558,8 +627,38 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
         </group>
       );
     }
-
-
+    // Shelves (floating wall shelves)
+    if (def.iconType === 'shelves') {
+      const shelfThickness = 0.02;
+      return (
+        <group>
+          {/* Tier 1 (1.0m height) */}
+          <mesh position={[0, 1.0, 0]} castShadow>
+            <boxGeometry args={[width, shelfThickness, depth]} />
+            <meshStandardMaterial color="#b45309" roughness={0.4} />
+          </mesh>
+          {/* Tier 2 (1.4m height) */}
+          <mesh position={[0, 1.4, 0]} castShadow>
+            <boxGeometry args={[width, shelfThickness, depth]} />
+            <meshStandardMaterial color="#b45309" roughness={0.4} />
+          </mesh>
+          {/* Tier 3 (1.8m height) */}
+          <mesh position={[0, 1.8, 0]} castShadow>
+            <boxGeometry args={[width, shelfThickness, depth]} />
+            <meshStandardMaterial color="#b45309" roughness={0.4} />
+          </mesh>
+          {/* Back vertical support rails */}
+          <mesh position={[-width * 0.3, 1.4, -depth / 2 + 0.01]} castShadow>
+            <boxGeometry args={[0.02, 1.0, 0.02]} />
+            <meshStandardMaterial color="#475569" roughness={0.5} />
+          </mesh>
+          <mesh position={[width * 0.3, 1.4, -depth / 2 + 0.01]} castShadow>
+            <boxGeometry args={[0.02, 1.0, 0.02]} />
+            <meshStandardMaterial color="#475569" roughness={0.5} />
+          </mesh>
+        </group>
+      );
+    }
 
     // Default block representation
     return (
@@ -572,7 +671,7 @@ export function Fixture3D({ fixture }: Fixture3DProps) {
 
   return (
     <group
-      position={[fixture.x * SCALE_3D, 0, fixture.y * SCALE_3D]}
+      position={[fixture.x * SCALE_3D, yOffset, fixture.y * SCALE_3D]}
       rotation={[0, rotationY, 0]}
       onClick={(e) => {
         e.stopPropagation();

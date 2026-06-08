@@ -6,7 +6,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { loadAllPlans, deletePlan, savePlan } from '@/utils/storage';
 import { listPlansFromFirestore, deletePlanFromFirestore, savePlanToFirestore } from '@/lib/firestoreSync';
 import { exportAllPlansToJSON } from '@/utils/exportHelpers';
-import { X, Plus, FolderOpen, Trash2, Download, Cloud, Monitor } from 'lucide-react';
+import { X, Plus, FolderOpen, Trash2, Download, Cloud, Monitor, Edit2, Copy, Check } from 'lucide-react';
+import { generateId } from '@/utils/idGenerator';
 import type { RoomPlan } from '@/types';
 
 interface PlanManagerModalProps {
@@ -22,6 +23,84 @@ export function PlanManagerModal({ onClose }: PlanManagerModalProps) {
 
   const [plans, setPlans] = useState<RoomPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>('');
+
+  const handleConfirmRename = async (id: string, e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    const trimmed = editingName.trim();
+    if (!trimmed) {
+      alert('Plan name cannot be empty.');
+      return;
+    }
+
+    try {
+      const updatedPlans = plans.map((p) => {
+        if (p.id === id) {
+          return { ...p, name: trimmed, updatedAt: Date.now() };
+        }
+        return p;
+      });
+
+      const targetPlan = updatedPlans.find((p) => p.id === id);
+      if (!targetPlan) return;
+
+      // If targetPlan is current plan, update in store
+      if (currentPlan.id === id) {
+        renamePlan(trimmed);
+      }
+
+      // Save to local storage
+      savePlan(targetPlan);
+
+      // Sync to Firestore if logged in
+      if (user) {
+        await savePlanToFirestore(user.uid, targetPlan);
+      }
+
+      setPlans(updatedPlans);
+      setEditingPlanId(null);
+    } catch (err) {
+      console.error('Failed to rename plan:', err);
+      alert('Failed to rename plan.');
+    }
+  };
+
+  const handleDuplicatePlan = async (originalPlan: RoomPlan, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newName = prompt('Enter a name for the new copy of this plan:', `${originalPlan.name} (Copy)`);
+    if (newName === null) return; // Cancelled
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      alert('Plan name cannot be empty.');
+      return;
+    }
+
+    const clonedPlan: RoomPlan = {
+      ...JSON.parse(JSON.stringify(originalPlan)),
+      id: generateId(),
+      name: trimmed,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    try {
+      // Save to local storage
+      savePlan(clonedPlan);
+
+      // Sync to Firestore if logged in
+      if (user) {
+        await savePlanToFirestore(user.uid, clonedPlan);
+      }
+
+      // Add to plans list
+      setPlans((prev) => [clonedPlan, ...prev]);
+    } catch (err) {
+      console.error('Failed to duplicate plan:', err);
+      alert('Failed to save copy: ' + (err as Error).message);
+    }
+  };
+
 
   // Load plans on mount or when user change
   useEffect(() => {
@@ -153,9 +232,28 @@ export function PlanManagerModal({ onClose }: PlanManagerModalProps) {
                 >
                   <div className="min-w-0 flex-1 pr-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-800 truncate block">
-                        {p.name || 'Untitled Plan'}
-                      </span>
+                      {editingPlanId === p.id ? (
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs font-semibold text-slate-800 bg-white border border-blue-400 rounded px-2 py-0.5 outline-none w-full max-w-xs focus:ring-1 focus:ring-blue-200"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleConfirmRename(p.id, e);
+                            } else if (e.key === 'Escape') {
+                              e.stopPropagation();
+                              setEditingPlanId(null);
+                            }
+                          }}
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-800 truncate block">
+                          {p.name || 'Untitled Plan'}
+                        </span>
+                      )}
                       {currentPlan.id === p.id && (
                         <span className="text-[9px] bg-blue-100 text-blue-800 px-1 rounded font-medium">Active</span>
                       )}
@@ -168,25 +266,68 @@ export function PlanManagerModal({ onClose }: PlanManagerModalProps) {
                       <span>Fixtures: {p.fixtures?.length || 0}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleLoadPlan(p)}
-                      className="p-1.5 rounded-md hover:bg-slate-200 text-slate-600 hover:text-slate-800"
-                      title="Load Plan"
-                    >
-                      <FolderOpen size={14} />
-                    </button>
-                    <button
-                      onClick={(e) => handleDeletePlan(p.id, e)}
-                      className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600"
-                      title="Delete Plan"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                    {editingPlanId === p.id ? (
+                      <>
+                        <button
+                          onClick={(e) => handleConfirmRename(p.id, e)}
+                          className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600 hover:text-emerald-800 transition-colors"
+                          title="Save Name"
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingPlanId(null);
+                          }}
+                          className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                          title="Cancel"
+                        >
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingPlanId(p.id);
+                            setEditingName(p.name || '');
+                          }}
+                          className="p-1.5 rounded-md hover:bg-slate-200 text-slate-600 hover:text-slate-800"
+                          title="Rename Plan"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDuplicatePlan(p, e)}
+                          className="p-1.5 rounded-md hover:bg-slate-200 text-slate-600 hover:text-slate-800"
+                          title="Save Copy (Duplicate)"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleLoadPlan(p)}
+                          className="p-1.5 rounded-md hover:bg-slate-200 text-slate-600 hover:text-slate-800"
+                          title="Load Plan"
+                        >
+                          <FolderOpen size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeletePlan(p.id, e)}
+                          className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          title="Delete Plan"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
+
           )}
         </div>
       </div>

@@ -447,6 +447,19 @@ export function FixtureIcon({ def, width, depth, color }: FixtureIconProps) {
       );
     }
 
+    case 'shelves':
+      return (
+        <g>
+          {/* Shelves outline */}
+          <rect x={-w / 2 + 1} y={-d / 2 + 1} width={w - 2} height={d - 2} fill="none" stroke={color} strokeWidth={0.8} />
+          {/* Dashed line representing multiple shelves */}
+          <line x1={-w / 2 + 1} y1={0} x2={w / 2 - 1} y2={0} stroke={color} strokeWidth={0.5} strokeDasharray="3,3" />
+          {/* Support brackets */}
+          <line x1={-w * 0.3} y1={-d / 2 + 1} x2={-w * 0.3} y2={d / 2 - 1} stroke={color} strokeWidth={0.5} opacity={0.6} />
+          <line x1={w * 0.3} y1={-d / 2 + 1} x2={w * 0.3} y2={d / 2 - 1} stroke={color} strokeWidth={0.5} opacity={0.6} />
+        </g>
+      );
+
     default:
       return null;
   }

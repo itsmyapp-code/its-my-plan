@@ -428,7 +428,8 @@ function svgToPngDataUrl(
           --canvas-wall-fill-external: #64748b;
         }
         svg { background: #ffffff !important; }
-        text { fill: #334155 !important; font-family: sans-serif; }
+        text { font-family: sans-serif; }
+        text:not(.custom-text) { fill: #334155 !important; }
         .grid-line { stroke: #e2e8f0; }
         .grid-major { stroke: #cbd5e1; }
       `;

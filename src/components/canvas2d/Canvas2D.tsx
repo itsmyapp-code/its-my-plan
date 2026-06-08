@@ -14,20 +14,20 @@ import { DrawingCursor } from './DrawingCursor';
 import { SnapIndicator } from './SnapIndicator';
 import { OpeningOverlay } from './OpeningOverlay';
 import { FixtureLayer } from './FixtureLayer';
-import type { Point, SnapResult } from '@/types';
+import type { Point, SnapResult, TextBox } from '@/types';
 
 export function Canvas2D() {
   const svgRef = useRef<SVGSVGElement>(null);
   const isPanning = useRef(false);
   const lastPanPos = useRef<{ x: number; y: number } | null>(null);
 
-  const { plan, addWall, updateWall, select, clearSelection, selection } = usePlanStore();
+  const { plan, addWall, updateWall, select, clearSelection, selection, addTextBox, updateTextBox } = usePlanStore();
   const { activeTool, isDrawing, drawStart, drawPreview, startDrawing, updateDrawPreview, cancelDrawing } = useToolStore();
   const { viewport, setViewport, viewSettings } = useUIStore();
 
   const draggedElement = useRef<{
     id: string;
-    type: 'fixture' | 'opening' | 'wall';
+    type: 'fixture' | 'opening' | 'wall' | 'text';
     startX: number;
     startY: number;
     initialX: number;
@@ -41,6 +41,7 @@ export function Canvas2D() {
   const [shiftHeld, setShiftHeld] = useState(false);
   const [measureStart, setMeasureStart] = useState<Point | null>(null);
   const [measureEnd, setMeasureEnd] = useState<Point | null>(null);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
   // Clear measurements when switching away from measure tool
   useEffect(() => {
@@ -153,6 +154,23 @@ export function Canvas2D() {
     (e.currentTarget as SVGElement).setPointerCapture(e.pointerId);
   }, [activeTool, plan.walls, screenToMM]);
 
+  const handleTextDragStart = useCallback((id: string, e: React.PointerEvent<SVGElement>) => {
+    if (activeTool !== 'select') return;
+    const mm = screenToMM(e.clientX, e.clientY);
+    const text = plan.texts?.find((t) => t.id === id);
+    if (text) {
+      draggedElement.current = {
+        id,
+        type: 'text',
+        startX: mm.x,
+        startY: mm.y,
+        initialX: text.x,
+        initialY: text.y,
+      };
+      (e.currentTarget as SVGElement).setPointerCapture(e.pointerId);
+    }
+  }, [activeTool, plan.texts, screenToMM]);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       // Middle mouse or Space+left for panning
@@ -208,6 +226,15 @@ export function Canvas2D() {
             startDrawing(snap.point);
           }
         }
+      } else if (activeTool === 'place-text') {
+        const snap = resolveSnap(mm, plan.walls, {
+          shiftHeld,
+        });
+        const newId = addTextBox(snap.point.x, snap.point.y, 'Double-click to edit');
+        select('text', newId);
+        useToolStore.getState().setTool('select');
+        setEditingTextId(newId);
+        return;
       } else if (activeTool === 'place-opening-door' || activeTool === 'place-opening-window') {
         // Find closest wall
         let closestWall = null;
@@ -313,7 +340,11 @@ export function Canvas2D() {
           newY = Math.round(newY / 50) * 50;
         }
         
-        usePlanStore.getState().updateFixture(draggedElement.current.id, { x: newX, y: newY });
+        if (draggedElement.current.type === 'text') {
+          usePlanStore.getState().updateTextBox(draggedElement.current.id, { x: newX, y: newY });
+        } else {
+          usePlanStore.getState().updateFixture(draggedElement.current.id, { x: newX, y: newY });
+        }
         return;
       }
 
@@ -396,7 +427,7 @@ export function Canvas2D() {
 
   // Determine cursor class
   const cursorClass =
-    activeTool === 'draw-wall'
+    (activeTool === 'draw-wall' || activeTool === 'place-text')
       ? 'cursor-draw'
       : activeTool === 'pan'
       ? 'cursor-pan'
@@ -561,6 +592,108 @@ export function Canvas2D() {
                   {formatMM(mLen)}
                 </text>
               </g>
+            </g>
+          );
+        })}
+
+        {/* Persistent Text Boxes */}
+        {(plan.texts || []).map((t) => {
+          const isSelected = selection.type === 'text' && selection.id === t.id;
+          const textX = t.x * SCALE_2D;
+          const textY = t.y * SCALE_2D;
+
+          return (
+            <g
+              key={t.id}
+              transform={`translate(${textX}, ${textY})`}
+              className="cursor-move select-none"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                select('text', t.id);
+                handleTextDragStart(t.id, e);
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setEditingTextId(t.id);
+              }}
+            >
+              {editingTextId === t.id ? (
+                <foreignObject
+                  x={-150}
+                  y={-25}
+                  width={300}
+                  height={50}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <textarea
+                    className="w-full h-full p-1 text-center bg-white border border-blue-500 rounded shadow-md resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800"
+                    style={{
+                      fontSize: `${t.fontSize * 0.75}px`,
+                      fontWeight: t.isBold ? 'bold' : 'normal',
+                      fontStyle: t.isItalic ? 'italic' : 'normal',
+                      color: t.color,
+                      lineHeight: '1.2',
+                    }}
+                    defaultValue={t.text}
+                    autoFocus
+                    onFocus={(e) => e.currentTarget.select()}
+                    onBlur={(e) => {
+                      updateTextBox(t.id, { text: e.target.value.trim() || 'Text' });
+                      setEditingTextId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.currentTarget.blur();
+                      }
+                      if (e.key === 'Escape') {
+                        setEditingTextId(null);
+                      }
+                    }}
+                  />
+                </foreignObject>
+              ) : (
+                <g>
+                  {/* Select highlight box */}
+                  {isSelected && (
+                    <rect
+                      x={-60}
+                      y={-18}
+                      width={120}
+                      height={36}
+                      rx={3}
+                      fill="transparent"
+                      stroke="var(--brand-orange)"
+                      strokeWidth={1.5}
+                      strokeDasharray="3 2"
+                    />
+                  )}
+                  {/* Invisible pointer-events target box to make text easy to click and select */}
+                  <rect
+                    x={-55}
+                    y={-15}
+                    width={110}
+                    height={30}
+                    fill="transparent"
+                    className="pointer-events-auto"
+                  />
+                  <text
+                    x={0}
+                    y={5}
+                    textAnchor="middle"
+                    className="custom-text pointer-events-none"
+                    style={{
+                      fontSize: `${t.fontSize}px`,
+                      fontWeight: t.isBold ? 'bold' : 'normal',
+                      fontStyle: t.isItalic ? 'italic' : 'normal',
+                      fill: t.color,
+                      fontFamily: 'var(--font-sans), sans-serif',
+                    }}
+                  >
+                    {t.text}
+                  </text>
+                </g>
+              )}
             </g>
           );
         })}

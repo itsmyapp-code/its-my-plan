@@ -22,6 +22,9 @@ export function migratePlan(plan: RoomPlan): RoomPlan {
       (op as Opening).hingeSide = 'p1';
     }
   }
+  if (!plan.texts) {
+    plan.texts = [];
+  }
   return plan;
 }
 

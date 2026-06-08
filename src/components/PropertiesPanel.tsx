@@ -4,7 +4,7 @@ import { usePlanStore } from '@/store/usePlanStore';
 import { wallLength, wallAngleDeg, wallDirection, distance } from '@/utils/geometry';
 import { clampOpeningPosition, hasOverlappingOpenings } from '@/utils/openingHelpers';
 import { getFixtureDefinition } from '@/data/fixtures';
-import { X, RotateCw, FlipHorizontal2, Trash2, Copy } from 'lucide-react';
+import { X, RotateCw, FlipHorizontal2, Trash2, Copy, Bold, Italic } from 'lucide-react';
 
 interface PropertiesPanelProps {
   onClose: () => void;
@@ -18,6 +18,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
   const updateOpening = usePlanStore((s) => s.updateOpening);
   const addFixture = usePlanStore((s) => s.addFixture);
   const updateFixture = usePlanStore((s) => s.updateFixture);
+  const updateTextBox = usePlanStore((s) => s.updateTextBox);
   const deleteSelected = usePlanStore((s) => s.deleteSelected);
 
   if (!selection.type || !selection.id) {
@@ -617,6 +618,145 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
           >
             <Trash2 size={12} />
             Delete Measurement
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Text Properties ──
+  if (selection.type === 'text') {
+    const textBox = plan.texts?.find((t) => t.id === selection.id);
+    if (!textBox) return null;
+
+    return (
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Text</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          <div>
+            <label className="prop-label">Text Content</label>
+            <textarea
+              className="prop-input h-16 resize-none mt-1 text-slate-900"
+              value={textBox.text}
+              onChange={(e) => updateTextBox(textBox.id, { text: e.target.value })}
+              placeholder="Enter text..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="prop-label">Size</label>
+              <select
+                className="prop-input mt-1"
+                value={textBox.fontSize}
+                onChange={(e) => updateTextBox(textBox.id, { fontSize: Number(e.target.value) })}
+              >
+                <option value={12}>Small (12pt)</option>
+                <option value={16}>Medium-Small (16pt)</option>
+                <option value={20}>Medium (20pt)</option>
+                <option value={24}>Large (24pt)</option>
+                <option value={32}>Extra Large (32pt)</option>
+                <option value={48}>Double Extra Large (48pt)</option>
+                <option value={64}>Gigantic (64pt)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="prop-label">Style</label>
+              <div className="flex gap-1 mt-1 h-[34px]">
+                <button
+                  onClick={() => updateTextBox(textBox.id, { isBold: !textBox.isBold })}
+                  className={`flex-1 flex items-center justify-center rounded-md border transition-colors ${
+                    textBox.isBold
+                      ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40 border-transparent'
+                      : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'
+                  }`}
+                  title="Bold"
+                >
+                  <Bold size={14} />
+                </button>
+                <button
+                  onClick={() => updateTextBox(textBox.id, { isItalic: !textBox.isItalic })}
+                  className={`flex-1 flex items-center justify-center rounded-md border transition-colors ${
+                    textBox.isItalic
+                      ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40 border-transparent'
+                      : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'
+                  }`}
+                  title="Italic"
+                >
+                  <Italic size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="prop-label">Text Color</label>
+            <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+              {[
+                { name: 'Dark', hex: '#0f172a' },
+                { name: 'Blue', hex: '#2563eb' },
+                { name: 'Red', hex: '#dc2626' },
+                { name: 'Orange', hex: '#ea580c' },
+                { name: 'Green', hex: '#16a34a' },
+                { name: 'Purple', hex: '#7c3aed' },
+                { name: 'Gray', hex: '#64748b' },
+                { name: 'White', hex: '#ffffff' },
+              ].map((c) => (
+                <button
+                  key={c.name}
+                  onClick={() => updateTextBox(textBox.id, { color: c.hex })}
+                  className={`h-7 rounded-lg border transition-all text-[10px] font-medium flex items-center justify-center ${
+                    textBox.color === c.hex
+                      ? 'ring-2 ring-blue-500 border-transparent text-slate-800 scale-105'
+                      : 'border-slate-300 hover:scale-102 text-slate-600 bg-white'
+                  }`}
+                  title={c.name}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full border border-slate-300"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="prop-label">X Coordinate</label>
+              <input
+                type="number"
+                className="prop-input mt-1"
+                value={Math.round(textBox.x)}
+                onChange={(e) => updateTextBox(textBox.id, { x: Number(e.target.value) || textBox.x })}
+                step={50}
+              />
+            </div>
+            <div>
+              <label className="prop-label">Y Coordinate</label>
+              <input
+                type="number"
+                className="prop-input mt-1"
+                value={Math.round(textBox.y)}
+                onChange={(e) => updateTextBox(textBox.id, { y: Number(e.target.value) || textBox.y })}
+                step={50}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={deleteSelected}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors"
+          >
+            <Trash2 size={12} />
+            Delete Text
           </button>
         </div>
       </div>

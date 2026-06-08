@@ -54,6 +54,17 @@ export interface Measurement {
   p2: Point;
 }
 
+export interface TextBox {
+  id: string;
+  x: number; // mm coordinate
+  y: number; // mm coordinate
+  text: string;
+  fontSize: number; // font size in SVG pixels (e.g. 12, 16, 20, 24, 32, 48, 64)
+  color: string; // hex color code or preset
+  isBold: boolean;
+  isItalic: boolean;
+}
+
 export interface RoomPlan {
   id: string;
   name: string;
@@ -61,6 +72,7 @@ export interface RoomPlan {
   openings: Opening[];
   fixtures: Fixture[];
   measurements?: Measurement[];
+  texts?: TextBox[];
   metadata: PlanMetadata;
   createdAt: number;
   updatedAt: number;
@@ -77,11 +89,11 @@ export interface AppViewSettings {
 }
 
 // Tool modes for the 2D canvas
-export type ToolMode = 'select' | 'draw-wall' | 'place-opening-door' | 'place-opening-window' | 'place-fixture' | 'pan' | 'measure';
+export type ToolMode = 'select' | 'draw-wall' | 'place-opening-door' | 'place-opening-window' | 'place-fixture' | 'pan' | 'measure' | 'place-text';
 
 // Selection state
 export interface SelectionState {
-  type: 'wall' | 'opening' | 'fixture' | 'measurement' | null;
+  type: 'wall' | 'opening' | 'fixture' | 'measurement' | 'text' | null;
   id: string | null;
 }
 

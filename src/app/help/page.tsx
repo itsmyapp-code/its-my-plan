@@ -36,6 +36,9 @@ export default function HelpPage() {
               <strong className="text-slate-800">Place Window (N)</strong> — Click on a wall to place a 1200mm window at 900mm sill height.
             </div>
             <div className="glass-panel rounded-xl p-4">
+              <strong className="text-slate-800">Add Text (X)</strong> — Click on the canvas to place a text box. Double-click it to edit the text inline, or drag it. Select it to format its size, styles, colors, or reposition it using keyboard Arrow Keys.
+            </div>
+            <div className="glass-panel rounded-xl p-4">
               <strong className="text-slate-800">Pan (H)</strong> — Drag to pan the canvas. Middle-mouse also pans in any mode.
             </div>
           </div>
@@ -59,10 +62,11 @@ export default function HelpPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-slate-900 mb-3">2D / 3D Views</h2>
+          <h2 className="text-xl font-semibold text-slate-900 mb-3">2D / 3D Views & Video Tours</h2>
           <p className="text-sm text-slate-600">
             Use the menu or header button to switch between 2D Blueprint and 3D Dollhouse views.
             Only one view is shown at a time for a full-screen experience. In 3D, use mouse to orbit, scroll to zoom.
+            You can record your 3D presentation by clicking <strong>Record Tour</strong> in the header while in 3D mode. Click <strong>Stop</strong> to download the video as a WebM file.
           </p>
         </section>
 
@@ -89,9 +93,9 @@ export default function HelpPage() {
           <div className="grid grid-cols-2 gap-2 text-sm">
             {[
               ['V', 'Select tool'], ['W', 'Draw wall'], ['D', 'Place door'], ['N', 'Place window'],
-              ['H', 'Pan tool'], ['F', 'Fixture library'], ['T', 'Material takeoff'], ['C', 'Clearance zones'],
-              ['R', 'Rotate fixture'], ['Del', 'Delete selected'], ['⌘Z', 'Undo'], ['⌘⇧Z', 'Redo'],
-              ['+ / −', 'Zoom in/out'], ['0', 'Reset view'], ['Esc', 'Cancel drawing'],
+              ['X', 'Add text tool'], ['H', 'Pan tool'], ['F', 'Fixture library'], ['T', 'Material takeoff'],
+              ['C', 'Clearance zones'], ['R', 'Rotate fixture'], ['Del', 'Delete selected'], ['⌘Z', 'Undo'],
+              ['⌘⇧Z', 'Redo'], ['+ / −', 'Zoom in/out'], ['0', 'Reset view'], ['Esc', 'Cancel drawing'],
             ].map(([key, desc]) => (
               <div key={key} className="flex gap-2 glass-panel rounded-lg px-3 py-2">
                 <kbd className="text-blue-600 font-mono text-xs min-w-[3rem]">{key}</kbd>

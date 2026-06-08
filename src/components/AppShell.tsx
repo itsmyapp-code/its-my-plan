@@ -22,7 +22,8 @@ import { exportToJSON, importFromJSON, export2DPDF, export3DPDF } from '@/utils/
 import { DEFAULT_PRINT_SCALE } from '@/constants';
 import { savePlan } from '@/utils/storage';
 import { savePlanToFirestore } from '@/lib/firestoreSync';
-import { Save, FolderOpen, Check, Loader2 } from 'lucide-react';
+import { Save, FolderOpen, Check, Loader2, Copy } from 'lucide-react';
+import { generateId } from '@/utils/idGenerator';
 
 const Canvas3D = dynamic(
   () => import('@/components/canvas3d/Canvas3D').then((mod) => ({ default: mod.Canvas3D })),
@@ -69,6 +70,106 @@ export function AppShell() {
   const [showPlans, setShowPlans] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+
+  // Live timer interval for recording duration
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingDuration((d) => d + 1);
+      }, 1000);
+    } else {
+      setRecordingDuration(0);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  // Automatically stop recording if we leave 3D view
+  useEffect(() => {
+    if (viewMode !== '3d' && isRecording) {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      setIsRecording(false);
+    }
+  }, [viewMode, isRecording, mediaRecorder]);
+
+  const handleToggleRecording = () => {
+    if (isRecording) {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      setIsRecording(false);
+    } else {
+      const canvasContainer = document.querySelector('#canvas-3d-main');
+      if (!canvasContainer) {
+        alert('Please switch to 3D mode first.');
+        return;
+      }
+      const canvas = canvasContainer.querySelector('canvas');
+      if (!canvas) {
+        alert('3D canvas not found. Try rotating the view.');
+        return;
+      }
+
+      let chunks: Blob[] = [];
+      const stream = canvas.captureStream(30); // Capture 3D canvas at 30 FPS
+
+      let options = { mimeType: 'video/webm;codecs=vp9' };
+      if (typeof MediaRecorder !== 'undefined') {
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm;codecs=vp8' };
+          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options = { mimeType: 'video/webm' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+              options = { mimeType: '' };
+            }
+          }
+        }
+      } else {
+        alert('MediaRecorder API is not supported in this browser.');
+        return;
+      }
+
+      try {
+        const recorder = new MediaRecorder(stream, options);
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          const sanitizedPlanName = plan.name.toLowerCase().replace(/[^a-z0-9_-]+/g, '_') || 'plan';
+          a.download = `${sanitizedPlanName}_3d_tour.webm`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        };
+
+        setMediaRecorder(recorder);
+        recorder.start(100); // Collect 100ms chunks
+        setIsRecording(true);
+      } catch (err) {
+        console.error('Failed to start recording:', err);
+        alert('Failed to start recording: ' + (err as Error).message);
+      }
+    }
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
@@ -81,6 +182,39 @@ export function AppShell() {
     } catch (err) {
       console.error('Failed to manually save:', err);
       alert('Failed to save plan: ' + (err as Error).message);
+      setSaveStatus('idle');
+    }
+  };
+
+  const handleSaveAs = async () => {
+    const newName = prompt('Enter a name for the new copy of this plan:', `${plan.name} (Copy)`);
+    if (newName === null) return; // User cancelled
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      alert('Plan name cannot be empty.');
+      return;
+    }
+
+    const newPlan = {
+      ...JSON.parse(JSON.stringify(plan)),
+      id: generateId(),
+      name: trimmedName,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    setSaveStatus('saving');
+    try {
+      setPlan(newPlan);
+      savePlan(newPlan);
+      if (user) {
+        await savePlanToFirestore(user.uid, newPlan);
+      }
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to manually save plan as copy:', err);
+      alert('Failed to save copy: ' + (err as Error).message);
       setSaveStatus('idle');
     }
   };
@@ -143,6 +277,7 @@ export function AppShell() {
             onPrint3D={handlePrint3D}
             onOpenSettings={() => setShowSettings(true)}
             onOpenPlans={() => setShowPlans(true)}
+            onSaveAs={handleSaveAs}
             isPrinting2D={isPrinting2D}
             isPrinting3D={isPrinting3D}
           />
@@ -183,6 +318,14 @@ export function AppShell() {
               )}
             </button>
             <button
+              onClick={handleSaveAs}
+              className="flex items-center justify-center p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+              title="Save Copy As (Save As)"
+              disabled={saveStatus === 'saving'}
+            >
+              <Copy size={13} />
+            </button>
+            <button
               onClick={() => setShowPlans(true)}
               className="flex items-center justify-center p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors border-l border-slate-100 pl-1.5"
               title="Load / Manage Plans"
@@ -201,6 +344,30 @@ export function AppShell() {
         </div>
 
         <div className="flex items-center gap-3">
+          {viewMode === '3d' && (
+            <button
+              onClick={handleToggleRecording}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border shadow-sm transition-all ${
+                isRecording
+                  ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+              title={isRecording ? 'Stop Recording' : 'Record 3D Tour Video'}
+            >
+              {isRecording ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-ping mr-0.5 shrink-0" />
+                  <span>Stop ({formatDuration(recordingDuration)})</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-red-500 mr-0.5 shrink-0" />
+                  <span>Record Tour</span>
+                </>
+              )}
+            </button>
+          )}
+
           <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
             <button
               onClick={() => useUIStore.getState().setViewMode('2d')}

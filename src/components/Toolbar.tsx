@@ -21,6 +21,7 @@ import {
   Zap,
   Droplets,
   Calculator,
+  Type,
 } from 'lucide-react';
 import { useToolStore } from '@/store/useToolStore';
 import { usePlanStore } from '@/store/usePlanStore';
@@ -55,6 +56,7 @@ export function Toolbar() {
     { id: 'place-opening-window', label: 'Place Window', shortcut: 'N', icon: <AppWindow size={18} /> },
     { id: 'pan', label: 'Pan', shortcut: 'H', icon: <Hand size={18} /> },
     { id: 'measure', label: 'Measure', shortcut: 'M', icon: <ArrowLeftRight size={18} /> },
+    { id: 'place-text', label: 'Add Text', shortcut: 'X', icon: <Type size={18} /> },
   ];
 
   const actions: ToolButton[] = [

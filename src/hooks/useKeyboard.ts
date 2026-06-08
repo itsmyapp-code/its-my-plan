@@ -27,7 +27,7 @@ export function useKeyboard() {
         case 'ArrowDown':
         case 'ArrowLeft':
         case 'ArrowRight': {
-          const { selection, plan, updateFixture, updateOpening, updateWall } = usePlanStore.getState();
+          const { selection, plan, updateFixture, updateOpening, updateWall, updateTextBox } = usePlanStore.getState();
           const shift = e.shiftKey;
           const delta = shift ? 10 : 50;
 
@@ -70,6 +70,18 @@ export function useKeyboard() {
                 p2: { x: wall.p2.x + dx, y: wall.p2.y + dy },
               });
             }
+          } else if (selection.type === 'text' && selection.id) {
+            const text = plan.texts?.find((t) => t.id === selection.id);
+            if (text) {
+              e.preventDefault();
+              let dx = 0;
+              let dy = 0;
+              if (e.key === 'ArrowLeft') dx = -delta;
+              if (e.key === 'ArrowRight') dx = delta;
+              if (e.key === 'ArrowUp') dy = -delta;
+              if (e.key === 'ArrowDown') dy = delta;
+              updateTextBox(selection.id, { x: text.x + dx, y: text.y + dy });
+            }
           }
           break;
         }
@@ -101,6 +113,11 @@ export function useKeyboard() {
         case 'm':
         case 'M':
           if (!e.ctrlKey && !e.metaKey) setTool('measure');
+          break;
+
+        case 'x':
+        case 'X':
+          if (!e.ctrlKey && !e.metaKey) setTool('place-text');
           break;
 
         case 'd':

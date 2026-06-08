@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Wall, Opening, Fixture, RoomPlan, SelectionState, PlanMetadata, Measurement, Point } from '@/types';
+import type { Wall, Opening, Fixture, RoomPlan, SelectionState, PlanMetadata, Measurement, Point, TextBox } from '@/types';
 import { generateId } from '@/utils/idGenerator';
 import { WALL_THICKNESS_INTERNAL, WALL_THICKNESS_EXTERNAL, DEFAULT_PRINT_SCALE } from '@/constants';
 import { useUIStore } from '@/store/useUIStore';
@@ -11,6 +11,7 @@ interface HistoryEntry {
   openings: Opening[];
   fixtures: Fixture[];
   measurements?: Measurement[];
+  texts?: TextBox[];
 }
 
 const MAX_HISTORY = 50;
@@ -59,6 +60,11 @@ interface PlanState {
   // Measurement actions
   addMeasurement: (p1: Point, p2: Point) => string;
   deleteMeasurement: (id: string) => void;
+
+  // TextBox actions
+  addTextBox: (x: number, y: number, text?: string) => string;
+  updateTextBox: (id: string, updates: Partial<Omit<TextBox, 'id'>>) => void;
+  deleteTextBox: (id: string) => void;
 }
 
 function defaultMetadata(): PlanMetadata {
@@ -79,6 +85,7 @@ function createEmptyPlan(): RoomPlan {
     openings: [],
     fixtures: [],
     measurements: [],
+    texts: [],
     metadata: defaultMetadata(),
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -91,6 +98,7 @@ function snapshotFromPlan(plan: RoomPlan): HistoryEntry {
     openings: JSON.parse(JSON.stringify(plan.openings)),
     fixtures: JSON.parse(JSON.stringify(plan.fixtures)),
     measurements: JSON.parse(JSON.stringify(plan.measurements || [])),
+    texts: JSON.parse(JSON.stringify(plan.texts || [])),
   };
 }
 
@@ -115,6 +123,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
         openings: JSON.parse(JSON.stringify(entry.openings)),
         fixtures: JSON.parse(JSON.stringify(entry.fixtures)),
         measurements: JSON.parse(JSON.stringify(entry.measurements || [])),
+        texts: JSON.parse(JSON.stringify(entry.texts || [])),
         updatedAt: Date.now(),
       },
       historyIndex: historyIndex - 1,
@@ -136,6 +145,7 @@ export const usePlanStore = create<PlanState>((set, get) => ({
         openings: JSON.parse(JSON.stringify(entry.openings)),
         fixtures: JSON.parse(JSON.stringify(entry.fixtures)),
         measurements: JSON.parse(JSON.stringify(entry.measurements || [])),
+        texts: JSON.parse(JSON.stringify(entry.texts || [])),
         updatedAt: Date.now(),
       },
       historyIndex: nextIndex - 1,
@@ -396,6 +406,9 @@ export const usePlanStore = create<PlanState>((set, get) => ({
       case 'measurement':
         get().deleteMeasurement(selection.id);
         break;
+      case 'text':
+        get().deleteTextBox(selection.id);
+        break;
     }
   },
 
@@ -434,6 +447,81 @@ export const usePlanStore = create<PlanState>((set, get) => ({
       },
       selection:
         state.selection.type === 'measurement' && state.selection.id === id
+          ? { type: null, id: null }
+          : state.selection,
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      canUndo: true,
+      canRedo: false,
+    });
+  },
+
+  addTextBox: (x, y, text = 'Text') => {
+    const id = generateId();
+    const state = get();
+    const snapshot = snapshotFromPlan(state.plan);
+    const newHistory = [...state.history.slice(0, state.historyIndex + 2), snapshot].slice(-MAX_HISTORY);
+
+    const texts = state.plan.texts || [];
+    set({
+      plan: {
+        ...state.plan,
+        texts: [
+          ...texts,
+          {
+            id,
+            x,
+            y,
+            text,
+            fontSize: 20,
+            color: '#0f172a',
+            isBold: false,
+            isItalic: false,
+          },
+        ],
+        updatedAt: Date.now(),
+      },
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      canUndo: true,
+      canRedo: false,
+    });
+    return id;
+  },
+
+  updateTextBox: (id, updates) => {
+    const state = get();
+    const snapshot = snapshotFromPlan(state.plan);
+    const newHistory = [...state.history.slice(0, state.historyIndex + 2), snapshot].slice(-MAX_HISTORY);
+
+    const texts = state.plan.texts || [];
+    set({
+      plan: {
+        ...state.plan,
+        texts: texts.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+        updatedAt: Date.now(),
+      },
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      canUndo: true,
+      canRedo: false,
+    });
+  },
+
+  deleteTextBox: (id) => {
+    const state = get();
+    const snapshot = snapshotFromPlan(state.plan);
+    const newHistory = [...state.history.slice(0, state.historyIndex + 2), snapshot].slice(-MAX_HISTORY);
+
+    const texts = state.plan.texts || [];
+    set({
+      plan: {
+        ...state.plan,
+        texts: texts.filter((t) => t.id !== id),
+        updatedAt: Date.now(),
+      },
+      selection:
+        state.selection.type === 'text' && state.selection.id === id
           ? { type: null, id: null }
           : state.selection,
       history: newHistory,
