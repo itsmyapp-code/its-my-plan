@@ -52,15 +52,15 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
     };
 
     return (
-      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in flex flex-col max-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Wall</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto flex-1">
           <div>
             <label className="prop-label">Length (mm)</label>
             <input
@@ -357,8 +357,8 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
     const wall = plan.walls.find((w) => w.id === opening.wallId);
 
     return (
-      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in flex flex-col max-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             {opening.type === 'door' ? 'Door' : 'Window'}
           </h3>
@@ -367,7 +367,7 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto flex-1">
           <div>
             <label className="prop-label">Width (mm)</label>
             <input
@@ -560,15 +560,15 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
     const def = getFixtureDefinition(fixture.type);
 
     return (
-      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in flex flex-col max-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Fixture</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto flex-1">
           <div>
             <label className="prop-label">Type</label>
             <div className="text-sm text-slate-900 font-medium">{def?.label ?? fixture.type}</div>
@@ -721,15 +721,15 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
     const len = distance(measurement.p1, measurement.p2);
 
     return (
-      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in flex flex-col max-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Measurement</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto flex-1">
           <div>
             <label className="prop-label">Distance</label>
             <div className="prop-input bg-slate-50 border border-slate-200 font-mono text-slate-700">
@@ -755,15 +755,15 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
     if (!textBox) return null;
 
     return (
-      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+      <div className="glass-panel absolute right-3 top-14 z-40 w-60 rounded-2xl overflow-hidden animate-fade-in flex flex-col max-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Text</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-800" aria-label="Close">
             <X size={14} />
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto flex-1">
           <div>
             <label className="prop-label">Text Content</label>
             <textarea
