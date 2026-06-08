@@ -42,6 +42,37 @@ export function Canvas2D() {
   const [measureStart, setMeasureStart] = useState<Point | null>(null);
   const [measureEnd, setMeasureEnd] = useState<Point | null>(null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const updateDimensions = () => {
+      setDimensions({
+        width: svg.clientWidth || 1200,
+        height: svg.clientHeight || 800,
+      });
+    };
+
+    updateDimensions();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(() => {
+        updateDimensions();
+      });
+      resizeObserver.observe(svg);
+      return () => {
+        resizeObserver.disconnect();
+      };
+    } else {
+      window.addEventListener('resize', updateDimensions);
+      return () => {
+        window.removeEventListener('resize', updateDimensions);
+      };
+    }
+  }, []);
+
 
   // Clear measurements when switching away from measure tool
   useEffect(() => {
@@ -464,8 +495,8 @@ export function Canvas2D() {
       >
         {/* Background grid */}
         <GridLayer
-          width={1200 / viewport.zoom}
-          height={800 / viewport.zoom}
+          width={dimensions.width / viewport.zoom}
+          height={dimensions.height / viewport.zoom}
           panX={viewport.panX}
           panY={viewport.panY}
         />
