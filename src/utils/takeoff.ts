@@ -29,7 +29,7 @@ export function computeMaterialTakeoff(plan: RoomPlan): MaterialTakeoff {
   const totalWallSurfaceArea = totalWallSurfaceAreaMM2 / 1_000_000;
 
   // ── Total Floor Area (m²) using cycle detection ──
-  const { area: floorArea, isOpen: isFloorAreaOpen } = computeFloorArea(plan);
+  const { area: floorArea, isOpen: isFloorAreaOpen, rooms = [] } = computeFloorArea(plan);
 
   // ── Timber Takeoff ──
   const timberTakeoff = calculateTimberTakeoff(plan);
@@ -43,11 +43,26 @@ export function computeMaterialTakeoff(plan: RoomPlan): MaterialTakeoff {
     const openingArea = wallOpenings.reduce((sum, o) => sum + o.width * o.height, 0);
     const netArea = wallArea - openingArea;
 
-    // Boarding sides: external defaults to 1, internal to 2.
-    let sides = wall.wallType === 'external' ? 1 : 2;
-    if (wall.plasterboardSides === 'none') sides = 0;
-    else if (wall.plasterboardSides === 'one') sides = 1;
-    else if (wall.plasterboardSides === 'both') sides = 2;
+    let sides = 2;
+    if (wall.plasterboardSides === 'none') {
+      sides = 0;
+    } else if (wall.plasterboardSides === 'one') {
+      sides = 1;
+    } else if (wall.plasterboardSides === 'both') {
+      sides = 2;
+    } else {
+      // Auto-detect based on boundaries
+      if (wall.wallType === 'external') {
+        sides = 1;
+      } else {
+        const containingRooms = rooms.filter((r) => r.wallIds.includes(wall.id));
+        if (containingRooms.length === 1) {
+          sides = 1; // It is a boundary wall of a single room
+        } else {
+          sides = 2; // It separates two rooms, or is a dangling partition wall / open layout
+        }
+      }
+    }
 
     plasterboardAreaMM2 += netArea * sides;
   }
@@ -60,12 +75,26 @@ export function computeMaterialTakeoff(plan: RoomPlan): MaterialTakeoff {
   let skirtingMM = 0;
   for (const wall of walls) {
     const len = wallLength(wall);
-    // Skirting on inside of external walls (1 side) and both sides of internal walls (2 sides)
-    let sides = wall.wallType === 'external' ? 1 : 2;
+    
+    let sides = 2;
     if (wall.plasterboardSides === 'none') {
       sides = 0;
     } else if (wall.plasterboardSides === 'one') {
       sides = 1;
+    } else if (wall.plasterboardSides === 'both') {
+      sides = 2;
+    } else {
+      // Auto-detect based on boundaries
+      if (wall.wallType === 'external') {
+        sides = 1;
+      } else {
+        const containingRooms = rooms.filter((r) => r.wallIds.includes(wall.id));
+        if (containingRooms.length === 1) {
+          sides = 1;
+        } else {
+          sides = 2;
+        }
+      }
     }
 
     const wallDoors = openings.filter((o) => o.wallId === wall.id && o.type === 'door');
@@ -83,9 +112,26 @@ export function computeMaterialTakeoff(plan: RoomPlan): MaterialTakeoff {
     if (op.type === 'door') {
       const wall = walls.find((w) => w.id === op.wallId);
       if (wall) {
-        let sides = wall.wallType === 'external' ? 1 : 2;
-        if (wall.plasterboardSides === 'none') sides = 0;
-        else if (wall.plasterboardSides === 'one') sides = 1;
+        let sides = 2;
+        if (wall.plasterboardSides === 'none') {
+          sides = 0;
+        } else if (wall.plasterboardSides === 'one') {
+          sides = 1;
+        } else if (wall.plasterboardSides === 'both') {
+          sides = 2;
+        } else {
+          // Auto-detect based on boundaries
+          if (wall.wallType === 'external') {
+            sides = 1;
+          } else {
+            const containingRooms = rooms.filter((r) => r.wallIds.includes(wall.id));
+            if (containingRooms.length === 1) {
+              sides = 1;
+            } else {
+              sides = 2;
+            }
+          }
+        }
 
         const runPerSide = 2 * op.height + op.width;
         architraveMM += runPerSide * sides;
@@ -225,9 +271,9 @@ function calculateTimberTakeoff(plan: RoomPlan): TimberLineItem[] {
  * Robust graph cycle-finder that filters out dangling nodes recursively
  * and calculates Shoelace areas of closed rooms.
  */
-function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
+function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean; rooms: { area: number; wallIds: string[] }[] } {
   const { walls } = plan;
-  if (walls.length < 3) return { area: 0, isOpen: true };
+  if (walls.length < 3) return { area: 0, isOpen: true, rooms: [] };
 
   // 1. Snap endpoints within 25mm to consolidate unique vertices
   const snapTolerance = 25; // mm
@@ -277,7 +323,7 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
   }
 
   if (edges.length < 3) {
-    return { area: 0, isOpen: true };
+    return { area: 0, isOpen: true, rooms: [] };
   }
 
   // 3. Build adjacency lists of directed edges
@@ -305,6 +351,7 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
 
   let totalAreaMM2 = 0;
   let hasValidCycles = false;
+  const roomResults: { area: number; wallIds: string[] }[] = [];
 
   for (let startV = 0; startV < vertices.length; startV++) {
     for (const startEdge of adj[startV]) {
@@ -312,6 +359,7 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
       if (visitedHalfEdges.has(startKey)) continue;
 
       const path: number[] = [startV];
+      const pathEdgeIds: string[] = [startEdge.edgeId];
       let currentV = startEdge.to;
       let prevV = startV;
       visitedHalfEdges.add(startKey);
@@ -359,6 +407,7 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
         }
 
         visitedHalfEdges.add(nextKey);
+        pathEdgeIds.push(bestNext.edgeId);
         prevV = currentV;
         currentV = bestNext.to;
       }
@@ -380,11 +429,15 @@ function computeFloorArea(plan: RoomPlan): { area: number; isOpen: boolean } {
         if (area > 0) {
           totalAreaMM2 += area;
           hasValidCycles = true;
+          roomResults.push({
+            area: area / 1_000_000,
+            wallIds: [...pathEdgeIds],
+          });
         }
       }
     }
   }
 
   const areaM2 = totalAreaMM2 / 1_000_000;
-  return { area: areaM2, isOpen: !hasValidCycles || areaM2 === 0 };
+  return { area: areaM2, isOpen: !hasValidCycles || areaM2 === 0, rooms: roomResults };
 }
