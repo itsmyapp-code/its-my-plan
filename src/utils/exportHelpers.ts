@@ -463,3 +463,186 @@ function svgToPngDataUrl(
     }
   });
 }
+
+/**
+ * Export Material Takeoff Sheet as a clean Portrait A4 PDF.
+ */
+export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
+  try {
+    const { computeMaterialTakeoff } = await import('@/utils/takeoff');
+    const takeoff = computeMaterialTakeoff(plan);
+    const meta = plan.metadata ?? {
+      jobNumber: '',
+      version: '1.0',
+      operator: '',
+      scale: DEFAULT_PRINT_SCALE,
+      clientName: '',
+    };
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const docWidth = doc.internal.pageSize.getWidth();
+    const docHeight = doc.internal.pageSize.getHeight();
+
+    // Border
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.5);
+    doc.rect(8, 8, docWidth - 16, docHeight - 16, 'S');
+
+    // Brand Header
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('its my plan', 15, 22);
+
+    // Colored accents next to brand logo
+    doc.setFillColor(59, 130, 246);
+    doc.rect(42, 18, 1.8, 1.8, 'F');
+    doc.setFillColor(249, 115, 22);
+    doc.rect(44.2, 18, 1.8, 1.8, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text('MATERIAL TAKEOFF SHEET', 15, 28);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Date Generated: ${new Date().toLocaleDateString('en-GB')}`, docWidth - 15, 22, { align: 'right' });
+
+    // Divider
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(15, 32, docWidth - 15, 32);
+
+    // Project Info
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 41, 59);
+    doc.text('PROJECT METADATA', 15, 39);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    
+    // Left column
+    doc.text(`Plan Name: ${plan.name || 'Untitled Plan'}`, 15, 45);
+    doc.text(`Client Name: ${meta.clientName || 'N/A'}`, 15, 50);
+    doc.text(`Job Number: ${meta.jobNumber || 'N/A'}`, 15, 55);
+
+    // Right column
+    doc.text(`Operator: ${meta.operator || 'N/A'}`, 110, 45);
+    doc.text(`Version: ${meta.version || '1.0'}`, 110, 50);
+    doc.text(`Blueprint Scale: ${meta.scale || DEFAULT_PRINT_SCALE}`, 110, 55);
+
+    // Divider
+    doc.line(15, 60, docWidth - 15, 60);
+
+    // 1. Core quantities table
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 41, 59);
+    doc.text('1. CORE QUANTITIES', 15, 67);
+
+    // Draw table headers
+    let y = 73;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(15, y, docWidth - 30, 7, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(51, 65, 85);
+    doc.text('Description', 18, y + 5);
+    doc.text('Measurement', 90, y + 5);
+    doc.text('Utility / Notes', 130, y + 5);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(15, y + 7, docWidth - 15, y + 7);
+
+    // Rows
+    const rows = [
+      { desc: 'Total Floor Area', val: `${takeoff.totalFloorArea.toFixed(2)} m²`, note: 'Based on enclosed wall boundary' },
+      { desc: 'Wall Surface Area', val: `${takeoff.totalWallSurfaceArea.toFixed(2)} m²`, note: 'Total drywall/plaster size minus openings' },
+      { desc: 'Base Perimeter', val: `${takeoff.totalBasePerimeter.toFixed(2)} lin. m`, note: 'Useful for baseboards / skirting runs' },
+      { desc: 'Wall Count', val: `${takeoff.wallCount} walls`, note: 'Count of drawn wall segments' },
+      { desc: 'Opening Count', val: `${takeoff.openingCount} openings`, note: 'Total windows and doors' },
+      { desc: 'Fixture Count', val: `${takeoff.fixtureCount} fixtures`, note: 'Kitchen, bathroom, furniture items' },
+    ];
+
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    for (const r of rows) {
+      doc.text(r.desc, 18, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text(r.val, 90, y + 5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(r.note, 130, y + 5);
+      
+      y += 7;
+      doc.line(15, y, docWidth - 15, y);
+    }
+
+    // 2. Structural Timber Framing (if available)
+    if (takeoff.timberTakeoff && takeoff.timberTakeoff.length > 0) {
+      y += 10;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 41, 59);
+      doc.text('2. STRUCTURAL TIMBER FRAMING', 15, y);
+
+      y += 6;
+      doc.setFillColor(241, 245, 249);
+      doc.rect(15, y, docWidth - 30, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+      doc.text('Profile Size', 18, y + 5);
+      doc.text('Grade', 70, y + 5);
+      doc.text('Linear Run', 95, y + 5);
+      doc.text('Estimated Stock Board Count', 125, y + 5);
+
+      doc.setDrawColor(226, 232, 240);
+      doc.line(15, y + 7, docWidth - 15, y + 7);
+
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+
+      for (const item of takeoff.timberTakeoff) {
+        doc.text(item.dimensions, 18, y + 5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(item.grade, 70, y + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${item.linearMeters.toFixed(1)} lin. m`, 95, y + 5);
+        
+        const boardsStr = item.boardCounts
+          .map((bc) => `${bc.count}x ${bc.length.toFixed(1)}m`)
+          .join(', ');
+        doc.text(boardsStr, 125, y + 5);
+
+        y += 7;
+        doc.line(15, y, docWidth - 15, y);
+      }
+    }
+
+    // Footer signature / sign-off box
+    y = docHeight - 35;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(15, y, docWidth - 15, y);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text('Approval Signature: ___________________________', 15, y + 8);
+    doc.text('Date: ________________________', 110, y + 8);
+
+    doc.text('its my plan — generated takeoff sheet', 15, docHeight - 12);
+    doc.text('Page 1 of 1', docWidth - 15, docHeight - 12, { align: 'right' });
+
+    downloadPdf(doc, sanitizeFilename(plan.name, '_takeoff.pdf'));
+  } catch (error) {
+    console.error('Failed to export Takeoff PDF:', error);
+    alert('Failed to export Takeoff PDF file.');
+  }
+}

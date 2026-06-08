@@ -3,7 +3,8 @@
 import { useMemo } from 'react';
 import { usePlanStore } from '@/store/usePlanStore';
 import { computeMaterialTakeoff } from '@/utils/takeoff';
-import { X, Ruler, Square, CircleDot, DoorOpen, Armchair, Hammer } from 'lucide-react';
+import { X, Ruler, Square, CircleDot, DoorOpen, Armchair, Hammer, Printer } from 'lucide-react';
+import { exportTakeoffPDF } from '@/utils/exportHelpers';
 
 interface TakeoffPanelProps {
   onClose: () => void;
@@ -21,13 +22,23 @@ export function TakeoffPanel({ onClose }: TakeoffPanelProps) {
         <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
           Material Takeoff Sheet
         </h3>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-700 transition-colors"
-          aria-label="Close"
-        >
-          <X size={14} />
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => exportTakeoffPDF(plan)}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+            title="Export PDF / Print Takeoff"
+            aria-label="Export PDF"
+          >
+            <Printer size={14} />
+          </button>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-700 transition-colors"
+            aria-label="Close"
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="p-4 space-y-3">
