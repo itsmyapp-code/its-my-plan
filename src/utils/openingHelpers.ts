@@ -138,3 +138,15 @@ export function getDoorArcPath(
 
   return `M ${pivotX} ${pivotY} A ${opening.width} ${opening.width} 0 0 ${opening.flipDirection ? 0 : 1} ${arcEndX} ${arcEndY}`;
 }
+
+/**
+ * Generate a unique, stable label (e.g. D1, W1) for an opening based on its type.
+ */
+export function getOpeningLabel(opening: Opening, openings: Opening[]): string {
+  const typedOpenings = openings
+    .filter((o) => o.type === opening.type)
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const index = typedOpenings.findIndex((o) => o.id === opening.id);
+  const prefix = opening.type === 'door' ? 'D' : 'W';
+  return `${prefix}${index + 1}`;
+}

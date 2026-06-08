@@ -213,6 +213,20 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
             </div>
           </div>
 
+          {/* Plasterboard Finishing */}
+          <div className="border-t border-slate-200/60 pt-3 mt-3">
+            <label className="prop-label">Plasterboard Finish</label>
+            <select
+              className="prop-input mt-1"
+              value={wall.plasterboardSides || (wall.wallType === 'external' ? 'one' : 'both')}
+              onChange={(e) => updateWall(wall.id, { plasterboardSides: e.target.value as any })}
+            >
+              <option value="none">None</option>
+              <option value="one">One Side Only</option>
+              <option value="both">Both Sides</option>
+            </select>
+          </div>
+
           {/* Timber Framing Settings */}
           <div className="border-t border-slate-200/60 pt-3 mt-3 space-y-3">
             <div className="flex items-center justify-between">
@@ -477,6 +491,17 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
               </div>
             </div>
           )}
+
+          <div>
+            <label className="prop-label">Specification / Notes</label>
+            <input
+              type="text"
+              className="prop-input mt-1 text-slate-900"
+              value={opening.specification || ''}
+              onChange={(e) => updateOpening(opening.id, { specification: e.target.value || undefined })}
+              placeholder={opening.type === 'door' ? 'e.g. FD30 Fire Door, Oak' : 'e.g. Double Glazed, uPVC'}
+            />
+          </div>
 
           <button
             onClick={() => updateOpening(opening.id, { flipDirection: !opening.flipDirection })}

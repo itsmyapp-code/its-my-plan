@@ -21,6 +21,7 @@ export interface Wall {
   customTimberThickness?: number; // thickness in mm
   timberGrade?: 'C16' | 'C24' | 'TR26';
   studSpacing?: number; // mm
+  plasterboardSides?: 'none' | 'one' | 'both';
 }
 
 export interface Opening {
@@ -33,6 +34,7 @@ export interface Opening {
   zOffset: number; // Elevation from floor (0 for doors, ~900mm for windows)
   flipDirection: boolean; // Door swing / window open direction
   hingeSide: 'p1' | 'p2'; // Which edge of the opening the door is hinged on
+  specification?: string; // e.g. "FD30 Fire Door"
 }
 
 export interface Fixture {
@@ -140,5 +142,14 @@ export interface MaterialTakeoff {
   openingCount: number;
   fixtureCount: number;
   timberTakeoff?: TimberLineItem[];
+  plasterboardArea?: number; // m²
+  plasterboardSheets2400?: number; // 2.4x1.2m sheets count
+  plasterboardSheets1800?: number; // 1.8x0.9m sheets count
+  skirtingMeters?: number; // lin. m
+  skirtingBoardsCount?: number; // 4.2m runs count
+  architraveMeters?: number; // lin. m
+  architraveBoardsCount?: number; // 2.4m runs count
+  insulationArea?: number; // m²
+  isFloorAreaOpen?: boolean;
 }
 

@@ -4,7 +4,7 @@ import { SCALE_2D } from '@/constants';
 import { usePlanStore } from '@/store/usePlanStore';
 import { useToolStore } from '@/store/useToolStore';
 import { wallDirection, wallNormal } from '@/utils/geometry';
-import { positionOnWall } from '@/utils/openingHelpers';
+import { positionOnWall, getOpeningLabel } from '@/utils/openingHelpers';
 
 interface OpeningOverlayProps {
   onDragStart: (id: string, e: React.PointerEvent<SVGElement>) => void;
@@ -112,6 +112,28 @@ export function OpeningOverlay({ onDragStart }: OpeningOverlayProps) {
                 style={{ cursor: activeTool === 'select' ? 'grab' : undefined }}
               />
 
+              {/* Unique ID tag */}
+              <g className="pointer-events-none select-none">
+                <circle
+                  cx={(gapStart.x + gapEnd.x) / 2}
+                  cy={(gapStart.y + gapEnd.y) / 2}
+                  r={5}
+                  fill="var(--canvas-bg)"
+                  stroke={isSelected ? 'var(--canvas-wall-selected)' : 'var(--brand-blue)'}
+                  strokeWidth={0.5}
+                />
+                <text
+                  x={(gapStart.x + gapEnd.x) / 2}
+                  y={(gapStart.y + gapEnd.y) / 2 + 1.5}
+                  textAnchor="middle"
+                  fill={isSelected ? 'var(--canvas-wall-selected)' : 'var(--brand-blue)'}
+                  fontSize={4.5}
+                  fontWeight="bold"
+                >
+                  {getOpeningLabel(opening, openings)}
+                </text>
+              </g>
+
               {isSelected && (
                 <text
                   x={(gapStart.x + gapEnd.x) / 2}
@@ -191,6 +213,28 @@ export function OpeningOverlay({ onDragStart }: OpeningOverlayProps) {
               strokeWidth={0.5}
               opacity={0.5}
             />
+
+            {/* Unique ID tag */}
+            <g className="pointer-events-none select-none">
+              <circle
+                cx={(gapStart.x + gapEnd.x) / 2}
+                cy={(gapStart.y + gapEnd.y) / 2}
+                r={5}
+                fill="var(--canvas-bg)"
+                stroke={isSelected ? 'var(--canvas-wall-selected)' : 'var(--brand-orange)'}
+                strokeWidth={0.5}
+              />
+              <text
+                x={(gapStart.x + gapEnd.x) / 2}
+                y={(gapStart.y + gapEnd.y) / 2 + 1.5}
+                textAnchor="middle"
+                fill={isSelected ? 'var(--canvas-wall-selected)' : 'var(--brand-orange)'}
+                fontSize={4.5}
+                fontWeight="bold"
+              >
+                {getOpeningLabel(opening, openings)}
+              </text>
+            </g>
 
             {isSelected && (
               <rect

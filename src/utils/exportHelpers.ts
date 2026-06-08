@@ -470,6 +470,7 @@ function svgToPngDataUrl(
 export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
   try {
     const { computeMaterialTakeoff } = await import('@/utils/takeoff');
+    const { getOpeningLabel } = await import('@/utils/openingHelpers');
     const takeoff = computeMaterialTakeoff(plan);
     const meta = plan.metadata ?? {
       jobNumber: '',
@@ -483,10 +484,27 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
     const docWidth = doc.internal.pageSize.getWidth();
     const docHeight = doc.internal.pageSize.getHeight();
 
-    // Border
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.5);
-    doc.rect(8, 8, docWidth - 16, docHeight - 16, 'S');
+    let currentPage = 1;
+    const footerHeight = 35;
+    const contentLimit = docHeight - footerHeight - 5;
+
+    // Helper to draw border and footer on pages
+    const drawPageChrome = (pageNum: number) => {
+      // Border
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.5);
+      doc.rect(8, 8, docWidth - 16, docHeight - 16, 'S');
+
+      // Footer
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`its my plan — generated takeoff sheet`, 15, docHeight - 12);
+      doc.text(`Page ${pageNum}`, docWidth - 15, docHeight - 12, { align: 'right' });
+    };
+
+    // Initialize Page 1 Chrome
+    drawPageChrome(1);
 
     // Brand Header
     doc.setTextColor(30, 41, 59);
@@ -494,11 +512,25 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
     doc.setFontSize(14);
     doc.text('its my plan', 15, 22);
 
-    // Colored accents next to brand logo
-    doc.setFillColor(59, 130, 246);
-    doc.rect(42, 18, 1.8, 1.8, 'F');
-    doc.setFillColor(249, 115, 22);
-    doc.rect(44.2, 18, 1.8, 1.8, 'F');
+    // Add brand logo
+    const logoDataUrl = await loadLogoDataUrl();
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, 'PNG', 42, 16.5, 5.5, 5.5);
+      } catch {
+        // Fallback to vector squares
+        doc.setFillColor(59, 130, 246);
+        doc.rect(42, 18, 1.8, 1.8, 'F');
+        doc.setFillColor(249, 115, 22);
+        doc.rect(44.2, 18, 1.8, 1.8, 'F');
+      }
+    } else {
+      // Fallback to vector squares
+      doc.setFillColor(59, 130, 246);
+      doc.rect(42, 18, 1.8, 1.8, 'F');
+      doc.setFillColor(249, 115, 22);
+      doc.rect(44.2, 18, 1.8, 1.8, 'F');
+    }
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -537,14 +569,41 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
     // Divider
     doc.line(15, 60, docWidth - 15, 60);
 
-    // 1. Core quantities table
+    let y = 67;
+
+    const checkPage = (needed: number, titleCont?: string) => {
+      if (y + needed > contentLimit) {
+        doc.addPage();
+        currentPage++;
+        drawPageChrome(currentPage);
+
+        doc.setTextColor(30, 41, 59);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(`its my plan — MATERIAL TAKEOFF SHEET (CONT.)${titleCont ? ` - ${titleCont}` : ''}`, 15, 20);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`Date Generated: ${new Date().toLocaleDateString('en-GB')}`, docWidth - 15, 20, { align: 'right' });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(15, 24, docWidth - 15, 24);
+
+        y = 32;
+      }
+    };
+
+    // ── 1. CORE QUANTITIES ──
+    checkPage(15, 'CORE QUANTITIES');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(30, 41, 59);
-    doc.text('1. CORE QUANTITIES', 15, 67);
+    doc.text('1. CORE QUANTITIES', 15, y);
+    y += 5;
 
     // Draw table headers
-    let y = 73;
+    checkPage(12, 'CORE QUANTITIES');
     doc.setFillColor(241, 245, 249);
     doc.rect(15, y, docWidth - 30, 7, 'F');
     doc.setFont('helvetica', 'bold');
@@ -556,21 +615,23 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
 
     doc.setDrawColor(226, 232, 240);
     doc.line(15, y + 7, docWidth - 15, y + 7);
+    y += 7;
 
-    // Rows
-    const rows = [
-      { desc: 'Total Floor Area', val: `${takeoff.totalFloorArea.toFixed(2)} m²`, note: 'Based on enclosed wall boundary' },
+    const coreRows = [
+      { desc: 'Total Floor Area', val: takeoff.isFloorAreaOpen ? '0.00 m² (Open layout)' : `${takeoff.totalFloorArea.toFixed(2)} m²`, note: 'Based on enclosed wall boundary' },
       { desc: 'Wall Surface Area', val: `${takeoff.totalWallSurfaceArea.toFixed(2)} m²`, note: 'Total drywall/plaster size minus openings' },
-      { desc: 'Base Perimeter', val: `${takeoff.totalBasePerimeter.toFixed(2)} lin. m`, note: 'Useful for baseboards / skirting runs' },
+      { desc: 'Base Perimeter', val: `${takeoff.totalBasePerimeter.toFixed(2)} lin. m`, note: 'Total wall footprint perimeter' },
       { desc: 'Wall Count', val: `${takeoff.wallCount} walls`, note: 'Count of drawn wall segments' },
       { desc: 'Opening Count', val: `${takeoff.openingCount} openings`, note: 'Total windows and doors' },
       { desc: 'Fixture Count', val: `${takeoff.fixtureCount} fixtures`, note: 'Kitchen, bathroom, furniture items' },
     ];
 
-    y += 7;
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(71, 85, 105);
-    for (const r of rows) {
+    for (const r of coreRows) {
+      checkPage(7, 'CORE QUANTITIES');
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
       doc.text(r.desc, 18, y + 5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 41, 59);
@@ -583,15 +644,74 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
       doc.line(15, y, docWidth - 15, y);
     }
 
-    // 2. Structural Timber Framing (if available)
+    y += 5;
+
+    // ── 2. DRYLINING, TRIMS & INSULATION ──
+    checkPage(15, 'DRYLINING & FINISHES');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 41, 59);
+    doc.text('2. DRYLINING, TRIMS & INSULATION', 15, y);
+    y += 5;
+
+    checkPage(12, 'DRYLINING & FINISHES');
+    doc.setFillColor(241, 245, 249);
+    doc.rect(15, y, docWidth - 30, 7, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(51, 65, 85);
+    doc.text('Material Category', 18, y + 5);
+    doc.text('Estimated Quantity', 90, y + 5);
+    doc.text('Notes / Specifications', 130, y + 5);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(15, y + 7, docWidth - 15, y + 7);
+    y += 7;
+
+    const dryliningRows = [
+      { desc: 'Plasterboard Area', val: `${(takeoff.plasterboardArea || 0).toFixed(1)} m²`, note: `Est. ${takeoff.plasterboardSheets2400}x sheets (2.4x1.2m) or ${takeoff.plasterboardSheets1800}x (1.8x0.9m) [10% waste]` },
+      { desc: 'Skirting Boards', val: `${(takeoff.skirtingMeters || 0).toFixed(1)} lin. m`, note: `Requires ${takeoff.skirtingBoardsCount || 0} boards of 4.2m standard stock` },
+      { desc: 'Door Architraves', val: `${(takeoff.architraveMeters || 0).toFixed(1)} lin. m`, note: `Requires ${takeoff.architraveBoardsCount || 0} single lengths of 2.4m standard stock` },
+    ];
+
+    if (takeoff.insulationArea && takeoff.insulationArea > 0) {
+      dryliningRows.push({
+        desc: 'Insulated Frame Area',
+        val: `${takeoff.insulationArea.toFixed(1)} m²`,
+        note: 'Requires thermal/acoustic stud wall insulation rolls'
+      });
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    for (const r of dryliningRows) {
+      checkPage(7, 'DRYLINING & FINISHES');
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(r.desc, 18, y + 5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text(r.val, 90, y + 5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(r.note, 130, y + 5);
+      
+      y += 7;
+      doc.line(15, y, docWidth - 15, y);
+    }
+
+    y += 5;
+
+    // ── 3. STRUCTURAL TIMBER FRAMING ──
     if (takeoff.timberTakeoff && takeoff.timberTakeoff.length > 0) {
-      y += 10;
+      checkPage(15, 'TIMBER FRAMING');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(30, 41, 59);
-      doc.text('2. STRUCTURAL TIMBER FRAMING', 15, y);
+      doc.text('3. STRUCTURAL TIMBER FRAMING', 15, y);
+      y += 5;
 
-      y += 6;
+      checkPage(12, 'TIMBER FRAMING');
       doc.setFillColor(241, 245, 249);
       doc.rect(15, y, docWidth - 30, 7, 'F');
       doc.setFont('helvetica', 'bold');
@@ -604,30 +724,97 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
 
       doc.setDrawColor(226, 232, 240);
       doc.line(15, y + 7, docWidth - 15, y + 7);
-
       y += 7;
+
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
 
       for (const item of takeoff.timberTakeoff) {
+        checkPage(7, 'TIMBER FRAMING');
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
         doc.text(item.dimensions, 18, y + 5);
         doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
         doc.text(item.grade, 70, y + 5);
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
         doc.text(`${item.linearMeters.toFixed(1)} lin. m`, 95, y + 5);
         
         const boardsStr = item.boardCounts
           .map((bc) => `${bc.count}x ${bc.length.toFixed(1)}m`)
           .join(', ');
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
         doc.text(boardsStr, 125, y + 5);
+
+        y += 7;
+        doc.line(15, y, docWidth - 15, y);
+      }
+
+      y += 5;
+    }
+
+    // ── 4. OPENINGS SCHEDULE ──
+    if (plan.openings.length > 0) {
+      checkPage(15, 'OPENING SCHEDULE');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 41, 59);
+      doc.text('4. DOOR & WINDOW OPENING SCHEDULE', 15, y);
+      y += 5;
+
+      checkPage(12, 'OPENING SCHEDULE');
+      doc.setFillColor(241, 245, 249);
+      doc.rect(15, y, docWidth - 30, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+      doc.text('ID', 18, y + 5);
+      doc.text('Type', 30, y + 5);
+      doc.text('Size (W × H)', 55, y + 5);
+      doc.text('Wall Location', 90, y + 5);
+      doc.text('Specification / Notes', 125, y + 5);
+
+      doc.setDrawColor(226, 232, 240);
+      doc.line(15, y + 7, docWidth - 15, y + 7);
+      y += 7;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+
+      const sortedOpenings = [...plan.openings].sort((a, b) => a.id.localeCompare(b.id));
+
+      for (const op of sortedOpenings) {
+        checkPage(7, 'OPENING SCHEDULE');
+        const wall = plan.walls.find((w) => w.id === op.wallId);
+        const wallType = wall ? (wall.wallType === 'external' ? 'External Wall' : 'Internal Wall') : 'N/A';
+        const label = getOpeningLabel(op, plan.openings);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
+        doc.text(label, 18, y + 5);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        doc.text(op.type === 'door' ? 'Door' : 'Window', 30, y + 5);
+        
+        const sizeStr = op.type === 'window' 
+          ? `${op.width} × ${op.height} mm (Sill: ${op.zOffset}mm)` 
+          : `${op.width} × ${op.height} mm`;
+        doc.text(sizeStr, 55, y + 5);
+        
+        doc.text(wallType, 90, y + 5);
+        doc.text(op.specification || 'Standard specification', 125, y + 5);
 
         y += 7;
         doc.line(15, y, docWidth - 15, y);
       }
     }
 
-    // Footer signature / sign-off box
-    y = docHeight - 35;
+    // Sign-off section
+    checkPage(30, 'SIGN-OFF');
+    y += 10;
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.3);
     doc.line(15, y, docWidth - 15, y);
@@ -636,9 +823,6 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
     doc.setFontSize(7.5);
     doc.text('Approval Signature: ___________________________', 15, y + 8);
     doc.text('Date: ________________________', 110, y + 8);
-
-    doc.text('its my plan — generated takeoff sheet', 15, docHeight - 12);
-    doc.text('Page 1 of 1', docWidth - 15, docHeight - 12, { align: 'right' });
 
     downloadPdf(doc, sanitizeFilename(plan.name, '_takeoff.pdf'));
   } catch (error) {
