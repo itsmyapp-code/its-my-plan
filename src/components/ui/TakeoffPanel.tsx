@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { usePlanStore } from '@/store/usePlanStore';
 import { computeMaterialTakeoff } from '@/utils/takeoff';
-import { X, Ruler, Square, CircleDot, DoorOpen, Armchair } from 'lucide-react';
+import { X, Ruler, Square, CircleDot, DoorOpen, Armchair, Hammer } from 'lucide-react';
 
 interface TakeoffPanelProps {
   onClose: () => void;
@@ -82,6 +82,42 @@ export function TakeoffPanel({ onClose }: TakeoffPanelProps) {
             <div className="text-[9px] text-slate-500 uppercase">Fixtures</div>
           </div>
         </div>
+
+        {/* Timber Takeoff Section */}
+        {takeoff.timberTakeoff && takeoff.timberTakeoff.length > 0 && (
+          <div className="border-t border-slate-200/60 pt-3 mt-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <Hammer size={12} className="text-slate-400" />
+              Structural Timber Takeoff
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {takeoff.timberTakeoff.map((item, idx) => (
+                <div key={idx} className="p-2 rounded-lg bg-slate-800/10 border border-slate-200/60 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <span>{item.dimensions}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-blue-600/10 text-[9px] text-blue-600 font-bold border border-blue-600/20 uppercase">
+                      {item.grade}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    Total: <span className="font-semibold text-slate-700">{item.linearMeters.toFixed(1)} lin. m</span>
+                  </div>
+                  {/* Board Counts badges */}
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.boardCounts.map((bc, bIdx) => (
+                      <span
+                        key={bIdx}
+                        className="px-1.5 py-0.5 rounded bg-slate-100 text-[9px] text-slate-600 font-mono border border-slate-200"
+                      >
+                        {bc.count}x {bc.length.toFixed(1)}m
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

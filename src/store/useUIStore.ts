@@ -18,6 +18,7 @@ interface UIState {
   toggleServiceLayers: () => void;
   toggleElectricalLayer: () => void;
   togglePlumbingLayer: () => void;
+  toggleFraming: () => void;
   setActiveMode: (mode: AppViewSettings['activeMode']) => void;
 
   // Panels
@@ -77,6 +78,7 @@ export const useUIStore = create<UIState>((set) => ({
     showElectricalLayer: true,
     showPlumbingLayer: true,
     activeMode: '2d',
+    showFraming: false,
   },
 
   toggleDimensions: () => {
@@ -131,6 +133,12 @@ export const useUIStore = create<UIState>((set) => ({
   setActiveMode: (mode) => {
     set((state) => ({
       viewSettings: { ...state.viewSettings, activeMode: mode },
+    }));
+  },
+
+  toggleFraming: () => {
+    set((state) => ({
+      viewSettings: { ...state.viewSettings, showFraming: !state.viewSettings.showFraming },
     }));
   },
 

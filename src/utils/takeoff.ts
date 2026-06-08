@@ -1,9 +1,10 @@
 // Material Takeoff Engine — pure JavaScript analytic utility
 // Computes architectural material dimensions from layout state
 
-import type { RoomPlan, MaterialTakeoff } from '@/types';
-import { wallLength } from './geometry';
+import type { RoomPlan, MaterialTakeoff, TimberLineItem } from '@/types';
+import { wallLength, getWallHeights } from './geometry';
 import { CEILING_HEIGHT } from '@/constants';
+import { getWallFramingLayout } from './framing';
 
 /**
  * Compute material takeoff from the current plan state.
@@ -39,6 +40,8 @@ export function computeMaterialTakeoff(plan: RoomPlan): MaterialTakeoff {
   // This works when walls form a closed polygon.
   const floorArea = computeFloorArea(plan);
 
+  const timberTakeoff = calculateTimberTakeoff(plan);
+
   return {
     totalFloorArea: floorArea,
     totalWallSurfaceArea: Math.max(0, totalWallSurfaceArea),
@@ -46,7 +49,101 @@ export function computeMaterialTakeoff(plan: RoomPlan): MaterialTakeoff {
     wallCount: walls.length,
     openingCount: openings.length,
     fixtureCount: fixtures.length,
+    timberTakeoff,
   };
+}
+
+function calculateTimberTakeoff(plan: RoomPlan): TimberLineItem[] {
+  const { walls, openings } = plan;
+  const groups: { [key: string]: { linearMM: number; boards: { [len: number]: number } } } = {};
+
+  const STANDARD_LENGTHS = [2.4, 3.0, 3.6, 4.2, 4.8]; // in meters
+
+  for (const wall of walls) {
+    if (!wall.hasFraming) continue;
+
+    const layout = getWallFramingLayout(wall, openings, CEILING_HEIGHT);
+    const { h1, h2 } = getWallHeights(wall, CEILING_HEIGHT);
+    const L = wallLength(wall);
+    const slopeLen = Math.sqrt(L * L + (h2 - h1) * (h2 - h1));
+
+    // Determine key for grouping: size + grade
+    let sizeLabel = '';
+    if (wall.timberSize === 'custom') {
+      sizeLabel = `${wall.customTimberThickness ?? 47} x ${wall.customTimberWidth ?? 169} mm`;
+    } else {
+      const parts = (wall.timberSize || '47x100').split('x');
+      sizeLabel = `${parts[0]} x ${parts[1]} mm`;
+    }
+    const grade = wall.timberGrade || 'C24';
+    const key = `${sizeLabel}|${grade}`;
+
+    if (!groups[key]) {
+      groups[key] = {
+        linearMM: 0,
+        boards: { 2.4: 0, 3.0: 0, 3.6: 0, 4.2: 0, 4.8: 0 },
+      };
+    }
+
+    const group = groups[key];
+
+    // 1. Plates: 1 bottom plate of length L, 2 top plates of length slopeLen
+    const bottomPlateLen = L;
+    const topPlatesLen = slopeLen * 2;
+    const totalPlatesLen = bottomPlateLen + topPlatesLen;
+    group.linearMM += totalPlatesLen;
+
+    // Estimate plates board counts: use 4.8m boards for plates runs
+    const platesBoardsCount = Math.ceil(totalPlatesLen / 4800);
+    group.boards[4.8] += platesBoardsCount;
+
+    // 2. Vertical studs
+    for (const stud of layout.studs) {
+      group.linearMM += stud.height;
+      
+      const studMeters = stud.height / 1000;
+      let matchedLen = 4.8;
+      for (const len of STANDARD_LENGTHS) {
+        if (len >= studMeters) {
+          matchedLen = len;
+          break;
+        }
+      }
+      group.boards[matchedLen] += 1;
+    }
+
+    // 3. Lintels (Headers)
+    for (const lintel of layout.headerLintels) {
+      const totalLintelLen = lintel.width * 2;
+      group.linearMM += totalLintelLen;
+      const lintelBoardsCount = Math.ceil(totalLintelLen / 4800);
+      group.boards[4.8] += lintelBoardsCount;
+    }
+
+    // 4. Sill Plates
+    for (const sill of layout.sillPlates) {
+      group.linearMM += sill.width;
+      const sillBoardsCount = Math.ceil(sill.width / 4800);
+      group.boards[4.8] += sillBoardsCount;
+    }
+  }
+
+  return Object.entries(groups).map(([key, val]) => {
+    const [dimensions, grade] = key.split('|');
+    const boardCounts = Object.entries(val.boards)
+      .map(([lenStr, count]) => ({
+        length: Number(lenStr),
+        count,
+      }))
+      .filter((bc) => bc.count > 0);
+
+    return {
+      dimensions,
+      grade: grade as any,
+      linearMeters: val.linearMM / 1000,
+      boardCounts,
+    };
+  });
 }
 
 /**

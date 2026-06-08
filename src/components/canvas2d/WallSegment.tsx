@@ -9,6 +9,7 @@ import { usePlanStore } from '@/store/usePlanStore';
 import { useToolStore } from '@/store/useToolStore';
 import { useUIStore } from '@/store/useUIStore';
 import { DimensionLabel } from './DimensionLabel';
+import { getWallFramingLayout } from '@/utils/framing';
 
 interface WallSegmentProps {
   wall: Wall;
@@ -20,6 +21,7 @@ export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
   const select = usePlanStore((s) => s.select);
   const activeTool = useToolStore((s) => s.activeTool);
   const showDimensions = useUIStore((s) => s.viewSettings.showDimensions);
+  const showFraming = useUIStore((s) => s.viewSettings.showFraming);
 
   const isSelected = selection.type === 'wall' && selection.id === wall.id;
   const openings = usePlanStore((s) => s.plan.openings);
@@ -31,8 +33,14 @@ export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
   const len = wallLength(wall);
   const mid = wallMidpoint(wall);
   const angle = wallAngleDeg(wall);
+  const wDir = useMemo(() => wallDirection(wall), [wall]);
   const { h1, h2 } = getWallHeights(wall, CEILING_HEIGHT);
   const isSloped = h1 !== h2;
+
+  const framing = useMemo(() => {
+    if (!showFraming || !wall.hasFraming) return null;
+    return getWallFramingLayout(wall, openings, CEILING_HEIGHT);
+  }, [showFraming, wall, openings]);
 
   // Find all openings on this wall and sort them from P1 to P2
   const wallOpenings = useMemo(() => {
@@ -148,6 +156,30 @@ export function WallSegment({ wall, onDragStart }: WallSegmentProps) {
         onClick={handleClick}
         onPointerDown={handlePointerDown}
       />
+
+      {/* Wall framing studs */}
+      {framing && framing.studs.map((stud) => {
+        const cx = (wall.p1.x + wDir.x * stud.distanceFromP1) * SCALE_2D;
+        const cy = (wall.p1.y + wDir.y * stud.distanceFromP1) * SCALE_2D;
+        const rectW = framing.timberThickness * SCALE_2D;
+        const rectH = Math.min(wall.thickness, framing.timberWidth) * SCALE_2D;
+
+        return (
+          <rect
+            key={stud.id}
+            x={cx - rectW / 2}
+            y={cy - rectH / 2}
+            width={rectW}
+            height={rectH}
+            fill={stud.type.startsWith('cripple') ? '#bcaaa4' : '#d7ccc8'}
+            stroke="#8d6e63"
+            strokeWidth={0.4}
+            transform={`rotate(${angle}, ${cx}, ${cy})`}
+            opacity={stud.type.startsWith('cripple') ? 0.7 : 0.95}
+            className="pointer-events-none"
+          />
+        );
+      })}
 
       {/* Center line (thin) */}
       <line

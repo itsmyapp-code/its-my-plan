@@ -22,6 +22,7 @@ import {
   Droplets,
   Calculator,
   Type,
+  Hammer,
 } from 'lucide-react';
 import { useToolStore } from '@/store/useToolStore';
 import { usePlanStore } from '@/store/usePlanStore';
@@ -46,7 +47,7 @@ export function Toolbar() {
     showTakeoffPanel, toggleTakeoffPanel,
     viewSettings, toggleClearanceZones,
     toggleElectricalLayer, togglePlumbingLayer,
-    toggleDimensions,
+    toggleDimensions, toggleFraming,
   } = useUIStore();
 
   const tools: ToolButton[] = [
@@ -143,6 +144,16 @@ export function Toolbar() {
         aria-label="Toggle Plumbing Layer"
       >
         <Droplets size={18} />
+      </button>
+
+      {/* Timber framing toggle */}
+      <button
+        className={`tool-btn ${viewSettings.showFraming ? 'active' : ''}`}
+        onClick={toggleFraming}
+        title="Toggle Structural Timber Framing"
+        aria-label="Toggle Structural Timber Framing"
+      >
+        <Hammer size={18} />
       </button>
 
       {/* Divider */}

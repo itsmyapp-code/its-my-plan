@@ -15,6 +15,12 @@ export interface Wall {
   heightP1?: number; // Height at p1 end in mm (for sloped/raked walls)
   heightP2?: number; // Height at p2 end in mm (for sloped/raked walls)
   color?: string; // Custom color override
+  hasFraming?: boolean;
+  timberSize?: '47x75' | '47x100' | '47x125' | '47x150' | '47x175' | '47x200' | '47x225' | '75x100' | '75x150' | 'custom';
+  customTimberWidth?: number; // depth/width in mm
+  customTimberThickness?: number; // thickness in mm
+  timberGrade?: 'C16' | 'C24' | 'TR26';
+  studSpacing?: number; // mm
 }
 
 export interface Opening {
@@ -86,6 +92,7 @@ export interface AppViewSettings {
   showElectricalLayer: boolean;
   showPlumbingLayer: boolean;
   activeMode: '2d' | '3d' | 'takeoff';
+  showFraming: boolean;
 }
 
 // Tool modes for the 2D canvas
@@ -112,6 +119,18 @@ export interface SnapResult {
   snapSourceId?: string; // ID of the wall/element snapped to
 }
 
+export interface TimberBoardCount {
+  length: number; // in meters (e.g. 2.4, 3.0, 3.6, 4.2, 4.8)
+  count: number;
+}
+
+export interface TimberLineItem {
+  dimensions: string; // e.g. "47 x 150 mm"
+  grade: 'C16' | 'C24' | 'TR26';
+  linearMeters: number;
+  boardCounts: TimberBoardCount[];
+}
+
 // Material takeoff results
 export interface MaterialTakeoff {
   totalFloorArea: number; // m²
@@ -120,5 +139,6 @@ export interface MaterialTakeoff {
   wallCount: number;
   openingCount: number;
   fixtureCount: number;
+  timberTakeoff?: TimberLineItem[];
 }
 

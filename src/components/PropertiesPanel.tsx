@@ -5,6 +5,7 @@ import { wallLength, wallAngleDeg, wallDirection, distance } from '@/utils/geome
 import { clampOpeningPosition, hasOverlappingOpenings } from '@/utils/openingHelpers';
 import { getFixtureDefinition } from '@/data/fixtures';
 import { X, RotateCw, FlipHorizontal2, Trash2, Copy, Bold, Italic } from 'lucide-react';
+import type { Wall } from '@/types';
 
 interface PropertiesPanelProps {
   onClose: () => void;
@@ -212,9 +213,133 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
             </div>
           </div>
 
+          {/* Timber Framing Settings */}
+          <div className="border-t border-slate-200/60 pt-3 mt-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Timber Framing</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={wall.hasFraming || false}
+                  onChange={(e) => {
+                    const hasFraming = e.target.checked;
+                    updateWall(wall.id, {
+                      hasFraming,
+                      // Set sensible defaults if turning on for the first time
+                      timberSize: wall.timberSize || (wall.wallType === 'external' ? '47x150' : '47x100'),
+                      timberGrade: wall.timberGrade || 'C24',
+                      studSpacing: wall.studSpacing || 400,
+                    });
+                  }}
+                />
+                <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            {wall.hasFraming && (
+              <div className="space-y-3 pl-1 border-l-2 border-blue-500/20 animate-fade-in">
+                {/* Timber Size Selector */}
+                <div>
+                  <label className="prop-label">Timber Size</label>
+                  <select
+                    className="prop-input mt-1"
+                    value={wall.timberSize || '47x100'}
+                    onChange={(e) => {
+                      const size = e.target.value as any;
+                      const updates: Partial<Wall> = { timberSize: size };
+                      if (size !== 'custom') {
+                        const [thick, width] = size.split('x').map(Number);
+                        updates.customTimberThickness = thick;
+                        updates.customTimberWidth = width;
+                      } else {
+                        updates.customTimberThickness = wall.customTimberThickness || 47;
+                        updates.customTimberWidth = wall.customTimberWidth || 169;
+                      }
+                      updateWall(wall.id, updates);
+                    }}
+                  >
+                    <option value="47x75">47 x 75 mm (2" x 3")</option>
+                    <option value="47x100">47 x 100 mm (2" x 4")</option>
+                    <option value="47x125">47 x 125 mm (2" x 5")</option>
+                    <option value="47x150">47 x 150 mm (2" x 6")</option>
+                    <option value="47x175">47 x 175 mm (2" x 7")</option>
+                    <option value="47x200">47 x 200 mm (2" x 8")</option>
+                    <option value="47x225">47 x 225 mm (2" x 9")</option>
+                    <option value="75x100">75 x 100 mm (3" x 4")</option>
+                    <option value="75x150">75 x 150 mm (3" x 6")</option>
+                    <option value="custom">Custom Size</option>
+                  </select>
+                </div>
+
+                {/* Custom Size Fields */}
+                {wall.timberSize === 'custom' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="prop-label">Thick (mm)</label>
+                      <input
+                        type="number"
+                        className="prop-input mt-1"
+                        value={wall.customTimberThickness ?? 47}
+                        onChange={(e) => updateWall(wall.id, { customTimberThickness: Number(e.target.value) || 47 })}
+                        min={10}
+                        step={1}
+                      />
+                    </div>
+                    <div>
+                      <label className="prop-label">Width (mm)</label>
+                      <input
+                        type="number"
+                        className="prop-input mt-1"
+                        value={wall.customTimberWidth ?? 169}
+                        onChange={(e) => updateWall(wall.id, { customTimberWidth: Number(e.target.value) || 169 })}
+                        min={10}
+                        step={1}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Strength Grade Selector */}
+                <div>
+                  <label className="prop-label">Strength Grade</label>
+                  <div className="flex gap-1 mt-1">
+                    {(['C16', 'C24', 'TR26'] as const).map((grade) => (
+                      <button
+                        key={grade}
+                        onClick={() => updateWall(wall.id, { timberGrade: grade })}
+                        className={`flex-1 px-1.5 py-1 rounded-md text-[10px] font-semibold transition-colors ${
+                          (wall.timberGrade || 'C24') === grade
+                            ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {grade}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Spacing Selector */}
+                <div>
+                  <label className="prop-label">Stud Spacing (mm)</label>
+                  <select
+                    className="prop-input mt-1"
+                    value={wall.studSpacing || 400}
+                    onChange={(e) => updateWall(wall.id, { studSpacing: Number(e.target.value) || 400 })}
+                  >
+                    <option value={400}>400 mm</option>
+                    <option value={600}>600 mm</option>
+                    <option value={300}>300 mm</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={deleteSelected}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors mt-2"
           >
             <Trash2 size={12} />
             Delete Wall
