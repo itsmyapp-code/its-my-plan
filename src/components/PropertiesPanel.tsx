@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { usePlanStore } from '@/store/usePlanStore';
 import { wallLength, wallAngleDeg, wallDirection, distance } from '@/utils/geometry';
 import { clampOpeningPosition, hasOverlappingOpenings } from '@/utils/openingHelpers';
 import { getFixtureDefinition } from '@/data/fixtures';
-import { X, RotateCw, FlipHorizontal2, Trash2, Copy, Bold, Italic } from 'lucide-react';
+import { X, RotateCw, FlipHorizontal2, Trash2, Copy, Bold, Italic, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Wall } from '@/types';
 
 interface PropertiesPanelProps {
@@ -21,6 +22,8 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
   const updateFixture = usePlanStore((s) => s.updateFixture);
   const updateTextBox = usePlanStore((s) => s.updateTextBox);
   const deleteSelected = usePlanStore((s) => s.deleteSelected);
+
+  const [wallSection, setWallSection] = useState<'dimensions' | 'finishes' | 'framing' | null>('dimensions');
 
   if (!selection.type || !selection.id) {
     return (
@@ -60,300 +63,333 @@ export function PropertiesPanel({ onClose }: PropertiesPanelProps) {
           </button>
         </div>
 
-        <div className="p-4 space-y-3 overflow-y-auto flex-1">
-          <div>
-            <label className="prop-label">Length (mm)</label>
-            <input
-              type="number"
-              className="prop-input"
-              value={Math.round(len)}
-              onChange={(e) => {
-                const newLen = Number(e.target.value) || len;
-                const dir = wallDirection(wall);
-                const p2 = {
-                  x: wall.p1.x + dir.x * newLen,
-                  y: wall.p1.y + dir.y * newLen,
-                };
-                updateWall(wall.id, { p2 });
+        <div className="p-3 space-y-3 overflow-y-auto flex-1">
+          {/* Section 1: Dimensions & Geometry */}
+          <div className="border border-slate-200/60 rounded-xl overflow-hidden bg-slate-50/20">
+            <button
+              onClick={() => setWallSection(wallSection === 'dimensions' ? null : 'dimensions')}
+              className="w-full flex items-center justify-between px-3 py-2 bg-slate-100/60 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              <span>1. Dimensions & Geometry</span>
+              {wallSection === 'dimensions' ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
+            {wallSection === 'dimensions' && (
+              <div className="p-3 space-y-3 bg-white/40 animate-fade-in">
+                <div>
+                  <label className="prop-label">Length (mm)</label>
+                  <input
+                    type="number"
+                    className="prop-input"
+                    value={Math.round(len)}
+                    onChange={(e) => {
+                      const newLen = Number(e.target.value) || len;
+                      const dir = wallDirection(wall);
+                      const p2 = {
+                        x: wall.p1.x + dir.x * newLen,
+                        y: wall.p1.y + dir.y * newLen,
+                      };
+                      updateWall(wall.id, { p2 });
+                      clampOpeningsForWall(p2);
+                    }}
+                    step={100}
+                    min={100}
+                  />
+                </div>
 
-                clampOpeningsForWall(p2);
-              }}
-              step={100}
-              min={100}
-            />
-          </div>
+                <div>
+                  <label className="prop-label">Angle</label>
+                  <input
+                    type="number"
+                    className="prop-input"
+                    value={Number.isFinite(angle) ? Number(angle.toFixed(1)) : 0}
+                    onChange={(e) => {
+                      const parsed = Number(e.target.value);
+                      if (!Number.isFinite(parsed)) return;
 
-          <div>
-            <label className="prop-label">Angle</label>
-            <input
-              type="number"
-              className="prop-input"
-              value={Number.isFinite(angle) ? Number(angle.toFixed(1)) : 0}
-              onChange={(e) => {
-                const parsed = Number(e.target.value);
-                if (!Number.isFinite(parsed)) return;
+                      const normalized = ((parsed % 360) + 360) % 360;
+                      const radians = (normalized * Math.PI) / 180;
+                      const p2 = {
+                        x: wall.p1.x + Math.cos(radians) * len,
+                        y: wall.p1.y + Math.sin(radians) * len,
+                      };
 
-                const normalized = ((parsed % 360) + 360) % 360;
-                const radians = (normalized * Math.PI) / 180;
-                const p2 = {
-                  x: wall.p1.x + Math.cos(radians) * len,
-                  y: wall.p1.y + Math.sin(radians) * len,
-                };
+                      updateWall(wall.id, { p2 });
+                      clampOpeningsForWall(p2);
+                    }}
+                    step={1}
+                    min={-360}
+                    max={360}
+                  />
+                </div>
 
-                updateWall(wall.id, { p2 });
-                clampOpeningsForWall(p2);
-              }}
-              step={1}
-              min={-360}
-              max={360}
-            />
-          </div>
+                <div>
+                  <label className="prop-label">Type</label>
+                  <div className="flex gap-1 mt-1">
+                    <button
+                      onClick={() => updateWall(wall.id, { wallType: 'internal', thickness: 100 })}
+                      className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-colors ${
+                        wall.wallType === 'internal'
+                          ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      Internal (100mm)
+                    </button>
+                    <button
+                      onClick={() => updateWall(wall.id, { wallType: 'external', thickness: 300 })}
+                      className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold transition-colors ${
+                        wall.wallType === 'external'
+                          ? 'bg-orange-600/30 text-orange-300 ring-1 ring-orange-500/40'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      External (300mm)
+                    </button>
+                  </div>
+                </div>
 
-          <div>
-            <label className="prop-label">Type</label>
-            <div className="flex gap-1 mt-1">
-              <button
-                onClick={() => updateWall(wall.id, { wallType: 'internal', thickness: 100 })}
-                className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  wall.wallType === 'internal'
-                    ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Internal (100mm)
-              </button>
-              <button
-                onClick={() => updateWall(wall.id, { wallType: 'external', thickness: 300 })}
-                className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  wall.wallType === 'external'
-                    ? 'bg-orange-600/30 text-orange-300 ring-1 ring-orange-500/40'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                External (300mm)
-              </button>
-            </div>
-          </div>
+                <div>
+                  <label className="prop-label">Thickness</label>
+                  <input
+                    type="number"
+                    className="prop-input"
+                    value={Math.round(wall.thickness)}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || wall.thickness;
+                      updateWall(wall.id, { thickness: Math.max(50, val) });
+                    }}
+                    step={10}
+                    min={50}
+                  />
+                </div>
 
-          <div>
-            <label className="prop-label">Thickness</label>
-            <input
-              type="number"
-              className="prop-input"
-              value={Math.round(wall.thickness)}
-              onChange={(e) => {
-                const val = Number(e.target.value) || wall.thickness;
-                updateWall(wall.id, { thickness: Math.max(50, val) });
-              }}
-              step={10}
-              min={50}
-            />
-          </div>
+                <div>
+                  <label className="prop-label">Height at P1 (mm)</label>
+                  <input
+                    type="number"
+                    className="prop-input"
+                    value={wall.heightP1 ?? wall.height ?? 2400}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 2400;
+                      updateWall(wall.id, { heightP1: val, height: undefined });
+                    }}
+                    step={100}
+                    min={1000}
+                  />
+                </div>
 
-          <div>
-            <label className="prop-label">Height at P1 (mm)</label>
-            <input
-              type="number"
-              className="prop-input"
-              value={wall.heightP1 ?? wall.height ?? 2400}
-              onChange={(e) => {
-                const val = Number(e.target.value) || 2400;
-                updateWall(wall.id, { heightP1: val, height: undefined });
-              }}
-              step={100}
-              min={1000}
-            />
-          </div>
-
-          <div>
-            <label className="prop-label">Height at P2 (mm)</label>
-            <input
-              type="number"
-              className="prop-input"
-              value={wall.heightP2 ?? wall.height ?? 2400}
-              onChange={(e) => {
-                const val = Number(e.target.value) || 2400;
-                updateWall(wall.id, { heightP2: val, height: undefined });
-              }}
-              step={100}
-              min={1000}
-            />
-            {(wall.heightP1 ?? wall.height ?? 2400) !== (wall.heightP2 ?? wall.height ?? 2400) && (
-              <p className="text-[10px] text-orange-400 mt-1">Sloped / raked wall — visible in 3D view</p>
+                <div>
+                  <label className="prop-label">Height at P2 (mm)</label>
+                  <input
+                    type="number"
+                    className="prop-input"
+                    value={wall.heightP2 ?? wall.height ?? 2400}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 2400;
+                      updateWall(wall.id, { heightP2: val, height: undefined });
+                    }}
+                    step={100}
+                    min={1000}
+                  />
+                  {(wall.heightP1 ?? wall.height ?? 2400) !== (wall.heightP2 ?? wall.height ?? 2400) && (
+                    <p className="text-[10px] text-orange-400 mt-1">Sloped / raked wall — visible in 3D view</p>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
-          <div>
-            <label className="prop-label">Wall Color</label>
-            <div className="grid grid-cols-4 gap-2 mt-1.5">
-              {[
-                { name: 'Default', hex: '' },
-                { name: 'White', hex: '#f8fafc' },
-                { name: 'Slate', hex: '#64748b' },
-                { name: 'Charcoal', hex: '#334155' },
-                { name: 'Sage', hex: '#8ea893' },
-                { name: 'Beige', hex: '#d7ccc8' },
-                { name: 'Blue', hex: '#7ea1c4' },
-                { name: 'Terracotta', hex: '#cc7a6f' },
-              ].map((c) => (
-                <button
-                  key={c.name}
-                  onClick={() => updateWall(wall.id, { color: c.hex || undefined })}
-                  className={`h-7 rounded-lg border transition-all text-[10px] font-medium ${
-                    (wall.color === c.hex || (!wall.color && c.hex === ''))
-                      ? 'ring-2 ring-blue-500 border-transparent text-slate-800 scale-105'
-                      : 'border-slate-300 hover:scale-102 text-slate-600 bg-white'
-                  }`}
-                  style={{ borderLeft: c.hex ? `4px solid ${c.hex}` : undefined }}
-                  title={c.name}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Plasterboard Finishing */}
-          <div className="border-t border-slate-200/60 pt-3 mt-3">
-            <label className="prop-label">Plasterboard Finish</label>
-            <select
-              className="prop-input mt-1"
-              value={wall.plasterboardSides || (wall.wallType === 'external' ? 'one' : 'both')}
-              onChange={(e) => updateWall(wall.id, { plasterboardSides: e.target.value as any })}
+          {/* Section 2: Colors & Finishes */}
+          <div className="border border-slate-200/60 rounded-xl overflow-hidden bg-slate-50/20">
+            <button
+              onClick={() => setWallSection(wallSection === 'finishes' ? null : 'finishes')}
+              className="w-full flex items-center justify-between px-3 py-2 bg-slate-100/60 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
             >
-              <option value="none">None</option>
-              <option value="one">One Side Only</option>
-              <option value="both">Both Sides</option>
-            </select>
-          </div>
-
-          {/* Timber Framing Settings */}
-          <div className="border-t border-slate-200/60 pt-3 mt-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Timber Framing</span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={wall.hasFraming || false}
-                  onChange={(e) => {
-                    const hasFraming = e.target.checked;
-                    updateWall(wall.id, {
-                      hasFraming,
-                      // Set sensible defaults if turning on for the first time
-                      timberSize: wall.timberSize || (wall.wallType === 'external' ? '47x150' : '47x100'),
-                      timberGrade: wall.timberGrade || 'C24',
-                      studSpacing: wall.studSpacing || 400,
-                    });
-                  }}
-                />
-                <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-
-            {wall.hasFraming && (
-              <div className="space-y-3 pl-1 border-l-2 border-blue-500/20 animate-fade-in">
-                {/* Timber Size Selector */}
+              <span>2. Colors & Finishes</span>
+              {wallSection === 'finishes' ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
+            {wallSection === 'finishes' && (
+              <div className="p-3 space-y-3 bg-white/40 animate-fade-in">
                 <div>
-                  <label className="prop-label">Timber Size</label>
+                  <label className="prop-label">Plasterboard Finish</label>
                   <select
                     className="prop-input mt-1"
-                    value={wall.timberSize || '47x100'}
-                    onChange={(e) => {
-                      const size = e.target.value as any;
-                      const updates: Partial<Wall> = { timberSize: size };
-                      if (size !== 'custom') {
-                        const [thick, width] = size.split('x').map(Number);
-                        updates.customTimberThickness = thick;
-                        updates.customTimberWidth = width;
-                      } else {
-                        updates.customTimberThickness = wall.customTimberThickness || 47;
-                        updates.customTimberWidth = wall.customTimberWidth || 169;
-                      }
-                      updateWall(wall.id, updates);
-                    }}
+                    value={wall.plasterboardSides || ''}
+                    onChange={(e) => updateWall(wall.id, { plasterboardSides: (e.target.value || undefined) as any })}
                   >
-                    <option value="47x75">47 x 75 mm (2" x 3")</option>
-                    <option value="47x100">47 x 100 mm (2" x 4")</option>
-                    <option value="47x125">47 x 125 mm (2" x 5")</option>
-                    <option value="47x150">47 x 150 mm (2" x 6")</option>
-                    <option value="47x175">47 x 175 mm (2" x 7")</option>
-                    <option value="47x200">47 x 200 mm (2" x 8")</option>
-                    <option value="47x225">47 x 225 mm (2" x 9")</option>
-                    <option value="75x100">75 x 100 mm (3" x 4")</option>
-                    <option value="75x150">75 x 150 mm (3" x 6")</option>
-                    <option value="custom">Custom Size</option>
+                    <option value="">Auto-detect (1 or 2 sides)</option>
+                    <option value="none">None</option>
+                    <option value="one">One Side Only</option>
+                    <option value="both">Both Sides</option>
                   </select>
                 </div>
 
-                {/* Custom Size Fields */}
-                {wall.timberSize === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="prop-label">Thick (mm)</label>
-                      <input
-                        type="number"
-                        className="prop-input mt-1"
-                        value={wall.customTimberThickness ?? 47}
-                        onChange={(e) => updateWall(wall.id, { customTimberThickness: Number(e.target.value) || 47 })}
-                        min={10}
-                        step={1}
-                      />
-                    </div>
-                    <div>
-                      <label className="prop-label">Width (mm)</label>
-                      <input
-                        type="number"
-                        className="prop-input mt-1"
-                        value={wall.customTimberWidth ?? 169}
-                        onChange={(e) => updateWall(wall.id, { customTimberWidth: Number(e.target.value) || 169 })}
-                        min={10}
-                        step={1}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Strength Grade Selector */}
                 <div>
-                  <label className="prop-label">Strength Grade</label>
-                  <div className="flex gap-1 mt-1">
-                    {(['C16', 'C24', 'TR26'] as const).map((grade) => (
+                  <label className="prop-label">Wall Color</label>
+                  <div className="grid grid-cols-4 gap-1.5 mt-1">
+                    {[
+                      { name: 'Default', hex: '' },
+                      { name: 'White', hex: '#f8fafc' },
+                      { name: 'Slate', hex: '#64748b' },
+                      { name: 'Charcoal', hex: '#334155' },
+                      { name: 'Sage', hex: '#8ea893' },
+                      { name: 'Beige', hex: '#d7ccc8' },
+                      { name: 'Blue', hex: '#7ea1c4' },
+                      { name: 'Terracotta', hex: '#cc7a6f' },
+                    ].map((c) => (
                       <button
-                        key={grade}
-                        onClick={() => updateWall(wall.id, { timberGrade: grade })}
-                        className={`flex-1 px-1.5 py-1 rounded-md text-[10px] font-semibold transition-colors ${
-                          (wall.timberGrade || 'C24') === grade
-                            ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        key={c.name}
+                        onClick={() => updateWall(wall.id, { color: c.hex || undefined })}
+                        className={`h-6 rounded-md border transition-all text-[9px] font-medium ${
+                          (wall.color === c.hex || (!wall.color && c.hex === ''))
+                            ? 'ring-2 ring-blue-500 border-transparent text-slate-800 scale-105'
+                            : 'border-slate-300 hover:scale-102 text-slate-600 bg-white'
                         }`}
+                        style={{ borderLeft: c.hex ? `4px solid ${c.hex}` : undefined }}
+                        title={c.name}
                       >
-                        {grade}
+                        {c.name}
                       </button>
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
 
-                {/* Spacing Selector */}
-                <div>
-                  <label className="prop-label">Stud Spacing (mm)</label>
-                  <select
-                    className="prop-input mt-1"
-                    value={wall.studSpacing || 400}
-                    onChange={(e) => updateWall(wall.id, { studSpacing: Number(e.target.value) || 400 })}
-                  >
-                    <option value={400}>400 mm</option>
-                    <option value={600}>600 mm</option>
-                    <option value={300}>300 mm</option>
-                  </select>
+          {/* Section 3: Timber Framing */}
+          <div className="border border-slate-200/60 rounded-xl overflow-hidden bg-slate-50/20">
+            <button
+              onClick={() => setWallSection(wallSection === 'framing' ? null : 'framing')}
+              className="w-full flex items-center justify-between px-3 py-2 bg-slate-100/60 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              <span>3. Timber Framing</span>
+              {wallSection === 'framing' ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
+            {wallSection === 'framing' && (
+              <div className="p-3 space-y-3 bg-white/40 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700">Enable Framing</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={wall.hasFraming || false}
+                      onChange={(e) => {
+                        const hasFraming = e.target.checked;
+                        updateWall(wall.id, {
+                          hasFraming,
+                          timberSize: wall.timberSize || (wall.wallType === 'external' ? '47x150' : '47x100'),
+                          timberGrade: wall.timberGrade || 'C24',
+                          studSpacing: wall.studSpacing || 400,
+                        });
+                      }}
+                    />
+                    <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
                 </div>
+
+                {wall.hasFraming && (
+                  <div className="space-y-3 pl-1.5 border-l-2 border-blue-500/20 animate-fade-in">
+                    <div>
+                      <label className="prop-label">Timber Size</label>
+                      <select
+                        className="prop-input mt-1"
+                        value={wall.timberSize || '47x100'}
+                        onChange={(e) => {
+                          const size = e.target.value as any;
+                          const updates: Partial<Wall> = { timberSize: size };
+                          if (size !== 'custom') {
+                            const [thick, width] = size.split('x').map(Number);
+                            updates.customTimberThickness = thick;
+                            updates.customTimberWidth = width;
+                          } else {
+                            updates.customTimberThickness = wall.customTimberThickness || 47;
+                            updates.customTimberWidth = wall.customTimberWidth || 169;
+                          }
+                          updateWall(wall.id, updates);
+                        }}
+                      >
+                        <option value="47x75">47 x 75 mm (2" x 3")</option>
+                        <option value="47x100">47 x 100 mm (2" x 4")</option>
+                        <option value="47x125">47 x 125 mm (2" x 5")</option>
+                        <option value="47x150">47 x 150 mm (2" x 6")</option>
+                        <option value="47x175">47 x 175 mm (2" x 7")</option>
+                        <option value="47x200">47 x 200 mm (2" x 8")</option>
+                        <option value="47x225">47 x 225 mm (2" x 9")</option>
+                        <option value="75x100">75 x 100 mm (3" x 4")</option>
+                        <option value="75x150">75 x 150 mm (3" x 6")</option>
+                        <option value="custom">Custom Size</option>
+                      </select>
+                    </div>
+
+                    {wall.timberSize === 'custom' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="prop-label">Thick (mm)</label>
+                          <input
+                            type="number"
+                            className="prop-input mt-1"
+                            value={wall.customTimberThickness ?? 47}
+                            onChange={(e) => updateWall(wall.id, { customTimberThickness: Number(e.target.value) || 47 })}
+                            min={10}
+                            step={1}
+                          />
+                        </div>
+                        <div>
+                          <label className="prop-label">Width (mm)</label>
+                          <input
+                            type="number"
+                            className="prop-input mt-1"
+                            value={wall.customTimberWidth ?? 169}
+                            onChange={(e) => updateWall(wall.id, { customTimberWidth: Number(e.target.value) || 169 })}
+                            min={10}
+                            step={1}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="prop-label">Strength Grade</label>
+                      <div className="flex gap-1 mt-1">
+                        {(['C16', 'C24', 'TR26'] as const).map((grade) => (
+                          <button
+                            key={grade}
+                            onClick={() => updateWall(wall.id, { timberGrade: grade })}
+                            className={`flex-1 px-1 py-1 rounded text-[9px] font-semibold transition-colors ${
+                              (wall.timberGrade || 'C24') === grade
+                                ? 'bg-blue-600/30 text-blue-300 ring-1 ring-blue-500/40'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            {grade}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="prop-label">Stud Spacing (mm)</label>
+                      <select
+                        className="prop-input mt-1"
+                        value={wall.studSpacing || 400}
+                        onChange={(e) => updateWall(wall.id, { studSpacing: Number(e.target.value) || 400 })}
+                      >
+                        <option value={400}>400 mm</option>
+                        <option value={600}>600 mm</option>
+                        <option value={300}>300 mm</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           <button
             onClick={deleteSelected}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors mt-2"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 text-xs font-medium hover:bg-red-900/40 transition-colors mt-2 shrink-0 animate-fade-in"
           >
             <Trash2 size={12} />
             Delete Wall
