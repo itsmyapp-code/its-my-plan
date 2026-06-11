@@ -770,11 +770,11 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(51, 65, 85);
-      doc.text('ID', 18, y + 5);
-      doc.text('Type', 30, y + 5);
-      doc.text('Size (W × H)', 55, y + 5);
-      doc.text('Wall Location', 90, y + 5);
-      doc.text('Specification / Notes', 125, y + 5);
+      doc.text('ID', 17, y + 5);
+      doc.text('Type', 27, y + 5);
+      doc.text('Size (W × H)', 45, y + 5);
+      doc.text('Wall Location', 95, y + 5);
+      doc.text('Specification / Notes', 130, y + 5);
 
       doc.setDrawColor(226, 232, 240);
       doc.line(15, y + 7, docWidth - 15, y + 7);
@@ -793,19 +793,19 @@ export async function exportTakeoffPDF(plan: RoomPlan): Promise<void> {
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(30, 41, 59);
-        doc.text(label, 18, y + 5);
+        doc.text(label, 17, y + 5);
         
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
-        doc.text(op.type === 'door' ? 'Door' : 'Window', 30, y + 5);
+        doc.text(op.type === 'door' ? 'Door' : 'Window', 27, y + 5);
         
         const sizeStr = op.type === 'window' 
           ? `${op.width} × ${op.height} mm (Sill: ${op.zOffset}mm)` 
           : `${op.width} × ${op.height} mm`;
-        doc.text(sizeStr, 55, y + 5);
+        doc.text(sizeStr, 45, y + 5);
         
-        doc.text(wallType, 90, y + 5);
-        doc.text(op.specification || 'Standard specification', 125, y + 5);
+        doc.text(wallType, 95, y + 5);
+        doc.text(op.specification || 'Standard specification', 130, y + 5);
 
         y += 7;
         doc.line(15, y, docWidth - 15, y);

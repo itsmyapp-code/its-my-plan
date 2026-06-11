@@ -96,10 +96,10 @@ export default function HelpPage() {
                   <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1.5">
                     <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      Zero Server fallback
+                      Cloud Auto-Save
                     </h4>
                     <p className="text-[11px] text-slate-500">
-                      All your plan blueprints are stored locally in your browser's Cache/LocalStorage. Your work is kept completely private and runs offline by default.
+                      All your plan designs automatically sync to your cloud account in real-time, letting you access your work securely from any device.
                     </p>
                   </div>
                   <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1.5">
@@ -260,28 +260,36 @@ export default function HelpPage() {
               <div>
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Cloud className="text-blue-500" size={18} />
-                  Cloud Database & Cloud Sync
+                  Cloud Syncing & Account Saving
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">Synchronizing files across browser devices.</p>
+                <p className="text-xs text-slate-500 mt-1">Accessing and protecting your layout designs.</p>
               </div>
 
               <div className="prose prose-slate max-w-none text-xs text-slate-600 leading-relaxed space-y-4">
                 <p>
-                  Sign in through the Hamburger menu to sync plans with Firebase Cloud.
-                  All plans autosave (debounced to 500ms) to Firestore. If you are signed out, plans remain safely stored locally.
+                  Sign in through the Hamburger menu to synchronize your plans across all your devices and ensure your designs are always backed up.
                 </p>
 
-                <div className="p-4 rounded-xl border border-yellow-200/60 bg-yellow-50/40 text-xs text-yellow-800 space-y-2">
-                  <h4 className="font-bold text-yellow-900 flex items-center gap-1.5">
-                    <Info size={14} className="text-yellow-600" />
-                    How to setup Firebase cloud sync variables:
-                  </h4>
-                  <ol className="list-decimal list-inside space-y-1 text-[11px] text-yellow-800">
-                    <li>Create a Firebase Project console in console.firebase.google.com</li>
-                    <li>Turn on <strong>Email/Password Auth</strong> and <strong>Cloud Firestore</strong></li>
-                    <li>Copy configurations into the local project <code className="text-xs bg-slate-200/50 px-1 rounded">.env.local</code></li>
-                    <li>Add the environment keys to Vercel Settings, then trigger a production build</li>
-                  </ol>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1.5">
+                    <h4 className="font-bold text-slate-800">🔄 Real-time Synchronization</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Every wall, opening, and fixture you place is instantly saved and securely backed up to the cloud. You never have to worry about manual saving or losing progress.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1.5">
+                    <h4 className="font-bold text-slate-800">💻 Multiple Devices</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Log in using the same credentials on any laptop, tablet, or desktop. All of your plans will instantly sync, allowing you to transition between different devices seamlessly.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex gap-3 text-xs text-blue-800 mt-4">
+                  <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                  <div>
+                    If you are logged out, any changes you make will be safely preserved in your browser's local cache. Signing back in will automatically sync these local changes to your cloud profile.
+                  </div>
                 </div>
               </div>
             </div>

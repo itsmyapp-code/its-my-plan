@@ -26,8 +26,8 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-2">3. Zero Server Architecture</h2>
-            <p>Our app operates purely in the client browser. No layout plan data, wall dimensions, or fixture positions are uploaded to or stored on external servers by default. Data loss due to browser storage clearings is the responsibility of the user.</p>
+            <h2 className="text-xl font-semibold text-white mb-2">3. Cloud Storage & Syncing</h2>
+            <p>If you are signed in, your layout plans, wall dimensions, and fixture configurations are securely stored and synced to the cloud. You are responsible for keeping your login credentials secure to protect your plan data.</p>
           </section>
 
           <section>

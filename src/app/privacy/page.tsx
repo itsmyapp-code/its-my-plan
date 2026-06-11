@@ -16,13 +16,13 @@ export default function PrivacyPage() {
         
         <div className="prose prose-invert max-w-none text-slate-300 space-y-6">
           <section>
-            <h2 className="text-xl font-semibold text-white mb-2">1. Client-Side Data (Zero Server)</h2>
-            <p>Our layout planner relies on a client-first architecture. All floor plans, structural walls, openings (doors and windows), and fixture layouts are processed and saved in your browser's local storage. We do not transmit this plan data to any server.</p>
+            <h2 className="text-xl font-semibold text-white mb-2">1. Data Storage & Privacy</h2>
+            <p>All floor plans, structural walls, openings, and fixture layouts are securely saved and synced to your cloud profile. If you are signed out, this plan data is temporarily preserved in your browser's local cache.</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-white mb-2">2. Personal Information Collected</h2>
-            <p>We do not require user signups or registrations for our core design tooling. No email address or name is collected during normal usage. We may collect basic diagnostic telemetry or optional cookies if explicitly consented to.</p>
+            <p>When you create an account or sign in, we collect your email address to authenticate your identity and protect your plan data. We do not share your personal information or plan designs with third parties.</p>
           </section>
 
           <section>
